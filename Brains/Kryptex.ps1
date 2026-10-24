@@ -46,7 +46,6 @@ while ($Config.PoolsConfig.$Name) {
 
     if ($Session.MyIPaddress) { 
         try { 
-
             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
             $URL = "https://pool.kryptex.com/api/v1/index"
 
@@ -63,7 +62,8 @@ while ($Config.PoolsConfig.$Name) {
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
                 if ($PoolsList = $APIdata.Content | ConvertFrom-Json) { 
 
-                    $PoolData = @{ }
+                    $Timestamp = [DateTime]::Now.ToUniversalTime()
+                    $PoolData = [PScustomObject]@{ }
 
                     if (-not $Session.KryptexCurrencies) { 
                         $Session.KryptexCurrencies = @($Session.PoolData.Kryptex.GuaranteedPayoutCurrencies)
@@ -72,55 +72,52 @@ while ($Config.PoolsConfig.$Name) {
 
                     # Get information for each available pool
                     foreach ($PoolName in ($PoolsList.PSObject.Properties.Name | Sort-Object)) { 
+                        if ($PoolsList.$PoolName.directMining) { 
 
-                        $URL = "https://pool.kryptex.com/$($PoolName.ToLower())/api/v1/pool/info"
+                            $URL = "https://pool.kryptex.com/$($PoolName.ToLower())/api/v1/pool/info"
 
-                        $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
-                        Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
-                        do { 
-                            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
-                            $APIallowedFailureCount --
-                        } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+                            $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+                            Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
+                            do { 
+                                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                                $APIallowedFailureCount --
+                            } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
-                        if ($APIerror) { 
-                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
-                        }
-                        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
-                            if ($PoolInfo = $APIdata.Content | ConvertFrom-Json) { 
-                                $PoolInfo | Add-Member Currency ($PoolName -replace "-.+").ToUpper()
-                                $PoolData | Add-Member $PoolName $PoolInfo -Force
+                            if ($APIerror) { 
+                                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
+                            }
+                            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
+                                if ($PoolInfo = $APIdata.Content | ConvertFrom-Json) { 
+
+                                    $AlgorithmNorm = Get-Algorithm $PoolInfo.algo
+                                    $Currency = [String]$PoolInfo.Currency # Without cast value might be $null
+                                    if ($Currency -notin $Session.KryptexCurrencies) { 
+                                        $Session.KryptexCurrencies = (@($Session.KryptexCurrencies) + $Currency ) | Sort-Object -Unique
+                                        $Session.KryptexCurrenciesUpdated = [DateTime]::Now.ToUniversalTime()
+                                    }
+
+                                    # Add algorithm only if there is no other coin with the same algorithm
+                                    if ($PoolData.PSObject.Properties.Name.Where{ $Currency -eq $PoolData.$_.Currency }.Count -eq 1) { 
+                                        Add-CurrencyAlgorithm -Algorithm $AlgorithmNorm -Currency $Currency
+                                    }
+
+                                    $PoolInfo | Add-Member AlgorithmNorm $AlgorithmNorm
+                                    $PoolInfo | Add-Member Currency ($PoolName -replace "-.+").ToUpper()
+                                    $PoolInfo | Add-Member Updated $Timestamp -Force
+                                    $PoolInfo | Add-Member URL "https://pool.kryptex.com/$($PoolName.ToLower())"
+
+                                    Remove-Variable AlgorithmNorm, Currency
+
+                                    $PoolInfo.PSObject.Properties.Remove("algo")
+                                    $PoolInfo.PSObject.Properties.Remove("name")
+                                    $PoolInfo.PSObject.Properties.Remove("symbol")
+                                    $PoolInfo.PSObject.Properties.Remove("ticker")
+
+                                    $PoolData | Add-Member $PoolName $PoolInfo
+                                }
                             }
                             Remove-Variable PoolInfo -ErrorAction Ignore
                         }
-                    }
-                    Remove-Variable PoolName -ErrorAction Ignore
-
-                    $Timestamp = [DateTime]::Now.ToUniversalTime()
-
-                    foreach ($PoolName in $PoolData.PSObject.Properties.Name) { 
-
-                        $PoolData.$PoolName | Add-Member AlgorithmNorm (Get-Algorithm $PoolData.$PoolName.algo)
-
-                        $Currency = [String]$PoolData.$PoolName.Currency # Without cast value might be $null
-                        if ($Currency -notin $Session.KryptexCurrencies) { 
-                            $Session.KryptexCurrencies = (@($Session.KryptexCurrencies) + $Currency ) | Sort-Object -Unique
-                            $Session.KryptexCurrenciesUpdated = [DateTime]::Now.ToUniversalTime()
-                        }
-
-                        # Add algorithm only if there is no other coin with the same algorithm
-                        if ($PoolData.PSObject.Properties.Name.Where{ $Currency -eq $PoolData.$_.Currency }.Count -eq 1) { 
-                            Add-CurrencyAlgorithm -Algorithm $PoolData.$PoolName.algo -Currency $Currency
-                        }
-
-                        $PoolData.$PoolName.PSObject.Properties.Remove("ticker")
-                        $PoolData.$PoolName.PSObject.Properties.Remove("symbol")
-                        $PoolData.$PoolName.PSObject.Properties.Remove("name")
-
-                        $PoolData.$PoolName | Add-Member CoinName ([String]$Session.CoinNames[$Currency]) -Force
-                        $PoolData.$PoolName | Add-Member Updated $Timestamp -Force
-                        $PoolData.$PoolName | Add-Member Url "https://pool.kryptex.com/$($PoolName.ToLower())"
-
-                        Remove-Variable Currency
                     }
 
                     $Session.BrainData.$Name = $PoolData
@@ -138,7 +135,7 @@ while ($Config.PoolsConfig.$Name) {
             $_.Exception | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
         }
-        Remove-Variable APIallowedFailureCount, Currency, PoolData, PoolList -ErrorAction Ignore
+        Remove-Variable APIallowedFailureCount, PoolData, PoolList -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
         $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum

@@ -56,12 +56,8 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
     $Currency = $PoolInfo.Currency
 
     $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-    if (-not $PoolInfo.directMining -and -not $PoolConfig.Wallets.$Currency) { 
-        [Void]$Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)")
-        $User = ""
-    }
-    elseif ($PoolConfig.UserName) { 
-        $User = $PoolConfig.UserName
+    if ($PoolConfig.UserName) { 
+        $User = $PoolConfig.UserName6
     }
     elseif ($PoolConfig.Wallets.$Currency) { 
         $User = $PoolConfig.Wallets.$Currency
@@ -73,10 +69,10 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
 
     $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
 
-    if ($BrainData.$PoolName.estimated_profit_day) { 
+    if ($PoolInfo.estimated_profit_day) { 
         if ($Session.Rates[$Currency]) { 
             $Value = [Double]($BrainData.$PoolName.estimated_profit_day * $Session.Rates[$Currency]["BTC"])
-    
+
             # Daily native profit per base hash unit
             # 1 seems to produce valid vaues for most algos
             # $Value = switch ($Currency) {
@@ -114,7 +110,7 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
                 Pass                     = "x"
                 Port                     = if ($_.urls[0]) { $_.urls[0] -replace ".+:" } else { $null }
                 PortSSL                  = if ($_.ssl_urls[0]) { $_.ssl_urls[0] -replace ".+:" } else { $null }
-                PoolURL                  = $PoolInfo.Url
+                PoolURL                  = $PoolInfo.URL
                 Price                    = if ($null -eq $PoolInfo.estimated_profit_day) { [Double]::NaN } else { $Stat.Live }
                 Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
                 Reasons                  = $Reasons

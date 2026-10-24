@@ -11,7 +11,7 @@ Enhancements:
 
 Improvements:
 - Balances Tracker: Execute 'Get-Rate' only when really neccesary
-- Core / Include.psm1: Reduce web API calls in funtion 'Update-AllDAGdata'
+- Core / Include.psm1: Reduce web API calls in function 'Update-AllDAGdata'
 - Core / Include.psm1: Function 'Get-Rate' gets FIAT currency exchange rates from 'https://api.coinlore.net/api/'. Use 'https://api.exchangerate.fun' as fallback.
 - Core / Include.psm1: Remove obsolete code
 
