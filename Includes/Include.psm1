@@ -1381,7 +1381,7 @@ function Get-Rate {
                 }
                 elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreTicker = $APIdata.Content | ConvertFrom-Json)) { 
                     $CoinloreTicker.ForEach{ 
-                        if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double]$_.price_btc }
+                        if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double]$_.price_usd }
                     }
                 }
             }
