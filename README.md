@@ -39,7 +39,7 @@ UG-Miner code is partly based on
 - Calculate power cost<sup>(1)</sup>
 - Miner switching log
 - Supported pools:
-   - [Krptex](<https://www.kryptex.com/?ref=3b8163ff>)<sup>(2)</sup>
+   - [Kryptex](<https://www.kryptex.com/?ref=3b8163ff>)<sup>(2)</sup>
    - [HashCryptos](<https://hashcryptos.com/>)
    - [MiningDutch](<https://www.mining-dutch.nl/>)
    - [NiceHash](<https://www.nicehash.com/>)<sup>(3)</sup>
