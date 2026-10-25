@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 using module .\Include.psm1
@@ -852,7 +852,10 @@ try {
 
                     $Miner.BaseName_Version_Device = $BaseName
                     $Miner.Info = "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"
-                    $Miner -as $Miner.API
+
+                    $M = [Activator]::CreateInstance([Type]$Miner.API)
+                    $Miner.Keys.ForEach{ $M.$_ = $Miner.$_ }
+                    $M
                 }
                 catch { 
                     Write-Message -Level Error "Failed to add miner '$($Miner.Name)' as '$($Miner.API)' ($($Miner | ConvertTo-Json -Compress))"
@@ -862,7 +865,7 @@ try {
                 }
             } | Sort-Object -Property Info
         )
-        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, Miner, MinerFile, Miners, MinerPools, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
+        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, M, Miner, MinerFile, Miners, MinerPools, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
 
         $DeviceMap = [System.Collections.Generic.Dictionary[String, Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($Device in $Session.EnabledDevices) {
@@ -1285,7 +1288,7 @@ try {
         $MinerPaths = ($Miners.Path | Sort-Object -Unique).ForEach{ "$PWD\$($_)" }
         $EndLoop = [DateTime]::Now.AddSeconds(60)
         do { 
-            $StuckMinerProcesses = (Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.ProcessID -notcontains $_.ProcessID -and $Miners.ProcessID -notcontains $_.ParentProcessID }.ProcessId.ForEach{ (Get-Process -Id $_ -ErrorAction Ignore).Where{ $_.MainWindowTitle -match ".+ \{.+@.+\}" } }
+            $StuckMinerProcesses = (Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $MinerPaths -contains $_.ExecutablePath -and $Miners.MinerProcessID -notcontains $_.ProcessID -and $Miners.MinerProcessID -notcontains $_.ParentProcessID }.ProcessId.ForEach{ (Get-Process -Id $_ -ErrorAction Ignore).Where{ $_.MainWindowTitle -match ".+ \{.+@.+\}" } }
             foreach ($StuckMinerProcess in $StuckMinerProcesses) { 
                 # Some miners, e.g. HellMiner, spawn child process(es) that may need separate killing
                 (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($StuckMinerProcess.Id)").ForEach{ Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore }

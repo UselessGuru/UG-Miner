@@ -1,3 +1,14 @@
+Changelog UG-Miner 6.9.1 2026/10/25
+===================================
+
+Fixes:
+- Core: No more 'No miners found' message after stopping and restart mining processes
+- Pool 'Kryptex': Mining with Kryptey username was broken
+
+Miner changes:
+- Wildrig-v0.51.8 (update)
+
+
 Changelog UG-Miner 6.9.0 2026/10/24
 ===================================
 

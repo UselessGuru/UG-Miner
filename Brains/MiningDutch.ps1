@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 using module ..\Includes\Include.psm1
@@ -54,12 +54,23 @@ while ($Config.PoolsConfig.$Name) {
             Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
             $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { 
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                } catch { 
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error))"
+                }
+                if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
+                    # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
+                    Start-Sleep -Seconds ([UInt16]($APIdata.Content -replace ".+Only \d request every " -replace " seconds allowed.+") + 1)
+                }
                 $APIallowedFailureCount --
-            } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+            } until (($APIdata.StatusCode -in @(200, 404) -and $APIdata.Content -notmatch "Only \d request every \d+ seconds allowed") -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
                 Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
+            }
+            elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Content))"
             }
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
                 if ($TotalStatsResult = (($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json).result) {  
@@ -67,20 +78,29 @@ while ($Config.PoolsConfig.$Name) {
                     $URL = "https://www.mining-dutch.nl/api/status"
                     $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
                     do { 
-                        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                        try { 
+                            Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                        } catch { 
+                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error))"
+                        }
+                        if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
+                            # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
+                            Start-Sleep -Seconds ([UInt16]($APIdata.Content -replace ".+Only \d request every " -replace " seconds allowed.+") + 1)
+                        }
                         $APIallowedFailureCount --
-                    } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+                    } until (($APIdata.StatusCode -in @(200, 404) -and $APIdata.Content -notmatch "Only \d request every \d+ seconds allowed") -or $APIallowedFailureCount -eq 0)
 
                     if ($APIerror) { 
                         Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
+                    }
+                    elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
+                        Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Content))"
                     }
                     elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
                         $Timestamp = [DateTime]::Now.ToUniversalTime()
 
                         # Change numeric string to numbers, some values are null
                         if ($AlgoData = ($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json) { 
-
-                            $Timestamp = [DateTime]::Now.ToUniversalTime()  
 
                             ($AlgoData.PSObject.Properties.Name).Where{ $TotalStatsResult.algorithm -notcontains $_ }.ForEach{ $AlgoData.PSObject.Properties.Remove($_) }
 
@@ -201,9 +221,9 @@ while ($Config.PoolsConfig.$Name) {
         Write-Message -Level $DebugLevel "Brain '$Name': End loop (Duration $Duration sec. / Avg. loop duration: $DurationsAvg sec.); Price history $($PoolObjects.Count) objects; found $($Session.BrainData.$Name.PSObject.Properties.Name.Count) valid pools."
     }
 
-    while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 5) -le $Session.EndCycleTime)))) { 
+    while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Session.PoolDataCollectedTimeStamp -and $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 4) -le $Session.EndCycleTime)))) { 
         Start-Sleep -Milliseconds 250
     }
 }
 
-Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, UserAgent -ErrorAction Ignore
+Remove-Variable APIcallFails, BrainDataFile, Duration, Durations, DurationsAvg, Headers, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, TimeStamp, UserAgent -ErrorAction Ignore

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Kryptex.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 param(
@@ -57,7 +57,7 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
 
     $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
     if ($PoolConfig.UserName) { 
-        $User = $PoolConfig.UserName6
+        $User = $PoolConfig.UserName
     }
     elseif ($PoolConfig.Wallets.$Currency) { 
         $User = $PoolConfig.Wallets.$Currency
@@ -72,13 +72,6 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
     if ($PoolInfo.estimated_profit_day) { 
         if ($Session.Rates[$Currency]) { 
             $Value = [Double]($BrainData.$PoolName.estimated_profit_day * $Session.Rates[$Currency]["BTC"])
-
-            # Daily native profit per base hash unit
-            # 1 seems to produce valid vaues for most algos
-            # $Value = switch ($Currency) {
-            #     # "XEC"    { $Value *= [Math]::Pow(10, 3); break }
-            #     default { $Value }
-            # }
 
             $Stat = Get-Stat -Name "$($Key)_Profit"
             if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 

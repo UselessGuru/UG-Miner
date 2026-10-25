@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 param(

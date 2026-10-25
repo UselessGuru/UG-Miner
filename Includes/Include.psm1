@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -342,7 +342,8 @@ class Miner : IDisposable {
     [Boolean]$Best = $false
     [String]$CommandLine = ""
     [String]$CommandLineLaunched = ""
-    [UInt]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
+    [UInt32]$ConhostProcessId = 0
+    [UInt32]$ContinousCycle = 0 # Counter, miner has been running continously for n loops
     [Double]$DataCollectInterval = 5 # Seconds, allow fractions of seconds
     [DateTime]$DataSampleTimestamp = 0 # Newest sample
     [System.Collections.Generic.List[String]]$DeviceNames = @() # derived from devices
@@ -353,7 +354,7 @@ class Miner : IDisposable {
     [Double]$Earnings_Bias = [Double]::NaN # derived from pool and stats
     [Double]$Earnings_Accuracy = 0 # derived from pool and stats
     [DateTime]$EndTime # UniversalTime
-    [String[]]$EnvVars = @()
+    [System.Collections.Generic.List[String]]$EnvVars = @()
     [Double[]]$Fee = @() # miner fee
     [Double[]]$Hashrates_Live = @()
     [String]$Info
@@ -363,6 +364,7 @@ class Miner : IDisposable {
     [String]$LogFile = "" # path to miner log file
     [Boolean]$MeasurePowerConsumption = $false # derived from stats
     [UInt16]$MinDataSample # for safe hashrate values
+    [UInt32]$MinerProcessId = 0
     [String]$MinerURL # access to miner API / web interface
     [String]$Name
     [Boolean]$Optimal = $false
@@ -374,7 +376,6 @@ class Miner : IDisposable {
     [Double]$PowerConsumption = [Double]::NaN
     [Double]$PowerConsumption_Live = [Double]::NaN
     [Boolean]$Prioritize = $false # derived from BalancesKeepAlive
-    [UInt32]$ProcessId = 0
     [Int16]$ProcessPriority = -1
     [Double]$Profit = [Double]::NaN
     [Double]$Profit_Bias = [Double]::NaN
@@ -396,7 +397,6 @@ class Miner : IDisposable {
 
     hidden [System.Collections.Generic.List[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
     hidden [System.Management.Automation.Job]$DataReaderJob = $null
-    hidden [System.Diagnostics.Process]$Process = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [DateTime]$StatEnd # UniversalTime
     hidden [DateTime]$StatStart # UniversalTime
@@ -556,11 +556,12 @@ class Miner : IDisposable {
                     $JobResult = $this.ProcessJob | Receive-Job -ErrorAction Ignore
 
                     if ($JobResult -and $JobResult.MinerProcessId) { 
-                        $this.ProcessId           = $JobResult.MinerProcessId
+                        $this.ConhostProcessId    = $JobResult.ConhostProcessId
                         $this.DataSampleTimestamp = [DateTime]::MinValue
+                        $this.MinerProcessId      = $JobResult.MinerProcessId
                         $this.Status              = [MinerStatus]::Running
                         $this.StatStart           = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
-                        $this.Process             = try { [System.Diagnostics.Process]::GetProcessById($this.ProcessId) } catch { }
+                        # $this.Process             = try { [System.Diagnostics.Process]::GetProcessById($this.ProcessId) } catch { }
 
                         $this.StartDataReader()
                         break
@@ -573,8 +574,6 @@ class Miner : IDisposable {
     }
 
     hidden [Void]StopMining() { 
-
-        [Int64]$Local:ProcessId = $null
 
         if ($this.Status -ne [MinerStatus]::Failed) { 
             Write-Message -Level Info "Stopping miner '$($this.Info)'..."
@@ -593,18 +592,19 @@ class Miner : IDisposable {
 
         $this.EndTime = $this.StatEnd = [DateTime]::Now.ToUniversalTime()
 
-        if ($this.Process.Id) { 
-            $Local:ProcessId = $this.Process.Id
-        }
-        else { 
-            $Local:ProcessId = ((Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
-        }
-        if ($Local:ProcessId) { 
+        # if ($this.MinerProcess.Id) { 
+        #     $Local:MinerProcessId = $this.MinerProcess.Id
+        # }
+        # else { 
+        #     $Local:MinerProcessId = ((Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
+        # }
+        if ($this.MinerProcessId) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($Local:ProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
-            [Void](Stop-Process -Id $Local:ProcessId -Force -ErrorAction Ignore)
-            $this.Process = $null
+            (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($this.MinerProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
+            [Void](Stop-Process -Id $this.MinerProcessId -Force -ErrorAction Ignore)
+            # $this.Process = $null
         }
+        if ($this.ConhostProcess.Id) { [Void](Stop-Process -Id $this.ConHostProcessId -Force -ErrorAction Ignore) }
 
         $this.StatusInfo = if ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace ".+stopped. " -replace ".+sample.*\) " } else { "" }
 
@@ -662,9 +662,9 @@ class Miner : IDisposable {
     [MinerStatus]GetStatus() { 
 
         if ($this.Status -eq [MinerStatus]::Running) { 
-            if ($this.ProcessJob.State -eq "Running" -and $this.ProcessId) { 
+            if ($this.ProcessJob.State -eq "Running" -and $this.MinerProcessId) { 
                 try { 
-                    [Void][System.Diagnostics.Process]::GetProcessById($this.ProcessId)
+                    [Void][System.Diagnostics.Process]::GetProcessById($this.MinerProcessId)
                     return [MinerStatus]::Running
                 }
                 catch { }
@@ -1386,7 +1386,7 @@ function Get-Rate {
                 }
             }
         }
-        Remove-Variable APIdata, APIerror, CoinloreAssetsData, CoinloreTicker, RelevantIDs, Url -ErrorAction Ignore
+        Remove-Variable APIdata, APIerror, CoinloreAssetsData, CoinloreTicker, RelevantIDs, URL -ErrorAction Ignore
 
         $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @((@($Session.AllCurrencies | Select-Object) + @("USD")) | Select-Object) -PassThru
         if ($Session.RatesMissingCurrencies) { 
@@ -1608,7 +1608,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.0
+    # ZPool24hr & ZPoolPlus removed in v6.9.1
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"

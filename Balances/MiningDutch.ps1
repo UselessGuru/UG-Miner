@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\MiningDutch.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -84,7 +84,7 @@ if  ($Config.MiningDutchUserName -and $Config.MiningDutchAPIKey) {
                                     Pending  = [Double]$BalanceInfo.getuserbalance.data.unconfirmed
                                     Balance  = [Double]$BalanceInfo.getuserbalance.data.confirmed
                                     Unpaid   = $Unpaid
-                                    Url      = "https://www.mining-dutch.nl/index.php?page=wallets"
+                                    URL      = "https://www.mining-dutch.nl/index.php?page=wallets"
                                 }
                             }
                             Remove-Variable Unpaid

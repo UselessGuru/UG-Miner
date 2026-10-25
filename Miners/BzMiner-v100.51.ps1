@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 # NEW DUAL MINING PEARL + C29! (Nvidia only, see below)
@@ -58,16 +58,16 @@ $Algorithms = @(
 #   @{ Algorithms = @("SHA256d", "");     Type = "INTEL"; Fee = @(0);     MinMemGiBfree = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --nvidia 0 --algo1 sha256d") } # ASIC
     @{ Algorithms = @("XelisHashV3", ""); Type = "INTEL"; Fee = @(0.01);  MinMemGiBfree = 1.08; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --nvidia 0 --algo1 xelis") }
 
-    @{ Algorithms = @("Autolykos2", "");        Type = "NVIDIA"; Fee = @(0.01);  MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 ergo") }
-    @{ Algorithms = @("Cuckoo29", "");          Type = "NVIDIA"; Fee = @(0.01);  MinMemGiBfree = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 c29") }
-    @{ Algorithms = @("EtcHash", "");           Type = "NVIDIA"; Fee = @(0.005); MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 etc") }
-    @{ Algorithms = @("Ethash", "");            Type = "NVIDIA"; Fee = @(0.005); MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 ethw") }
-    @{ Algorithms = @("KawPow", "");            Type = "NVIDIA"; Fee = @(0.01);  MinMemGiBfree = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 kawpow") }
-    @{ Algorithms = @("JanusHash", "");         Type = "NVIDIA"; Fee = @(0.02);  MinMemGiBfree = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 warthog") }
-    @{ Algorithms = @("PearlHash", "");         Type = "NVIDIA"; Fee = @(0.02);  MinMemGiBfree = 4;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 pearl") }
-    @{ Algorithms = @("PearlHash", "Cuckoo29"); Type = "NVIDIA"; Fee = @(0.02);  MinMemGiBfree = 4;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 pearl --algo2 c29") }
-#   @{ Algorithms = @("SHA256d", "");           Type = "NVIDIA"; Fee = @(0);     MinMemGiBfree = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 sha256d") } # ASIC
-    @{ Algorithms = @("XelisHashV3", "");       Type = "NVIDIA"; Fee = @(0.01);  MinMemGiBfree = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 xelis") }
+    @{ Algorithms = @("Autolykos2", "");        Type = "NVIDIA"; Fee = @(0.01);       MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 ergo") }
+    @{ Algorithms = @("Cuckoo29", "");          Type = "NVIDIA"; Fee = @(0.01);       MinMemGiBfree = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 c29") }
+    @{ Algorithms = @("EtcHash", "");           Type = "NVIDIA"; Fee = @(0.005);      MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 etc") }
+    @{ Algorithms = @("Ethash", "");            Type = "NVIDIA"; Fee = @(0.005);      MinMemGiBfree = 1.24; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 ethw") }
+    @{ Algorithms = @("KawPow", "");            Type = "NVIDIA"; Fee = @(0.01);       MinMemGiBfree = 1.08; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 kawpow") }
+    @{ Algorithms = @("JanusHash", "");         Type = "NVIDIA"; Fee = @(0.02);       MinMemGiBfree = 2;    WarmupTimes = @(60, 60); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 warthog") }
+    @{ Algorithms = @("PearlHash", "");         Type = "NVIDIA"; Fee = @(0.02);       MinMemGiBfree = 4;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 pearl") }
+    @{ Algorithms = @("PearlHash", "Cuckoo29"); Type = "NVIDIA"; Fee = @(0.02, 0.01); MinMemGiBfree = 4;    WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 pearl --algo2 c29") }
+#   @{ Algorithms = @("SHA256d", "");           Type = "NVIDIA"; Fee = @(0);          MinMemGiBfree = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 sha256d") } # ASIC
+    @{ Algorithms = @("XelisHashV3", "");       Type = "NVIDIA"; Fee = @(0.01);       MinMemGiBfree = 1.24; WarmupTimes = @(45, 5);  ExcludeGPUarchitectures = " "; ExcludeGPUmodel = " "; ExcludePools = @(@(), @()); Arguments = @(" --amd 0 --cpu 0 --intel 0 --algo1 xelis") }
     
 )
 

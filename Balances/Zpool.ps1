@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -38,7 +38,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach{
         do { 
             try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
             $APIallowedFailureCount --
-        } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+        } until ($APIdata.StatusCode -in @(200, 403, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
             Write-Message -Level Error "BalancesTracker '$Name': Query to '$URL' failed ($($APIerror.Message))"
@@ -65,7 +65,7 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach{
                         Unpaid   = [Double]$BalanceInfo.unpaid # Balance + unsold (pending)
                         # Paid     = [Double]$BalanceInfo.total # Reset after payout
                         # Total    = [Double]$BalanceInfo.unpaid + [Double]$BalanceInfo.total # Reset after payout
-                        Url      = "https://zpool.ca/wallet/$Wallet"
+                        URL      = "https://zpool.ca/wallet/$Wallet"
                     }
                 }
             }

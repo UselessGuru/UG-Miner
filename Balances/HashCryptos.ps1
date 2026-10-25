@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\HashCryptos.ps1
-Version:        6.9.0
-Version date:   2026/10/24
+Version:        6.9.1
+Version date:   2026/10/25
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -58,7 +58,7 @@ if ($Wallet) {
                     Unpaid   = [Double]$BalanceInfo.unpaid # Balance + unsold (pending)
                     # Paid     = [Double]$BalanceInfo.total # Reset after payout
                     # Total    = [Double]$BalanceInfo.unpaid + [Double]$BalanceInfo.total # Reset after payout
-                    Url      = "https://hashcryptos.com/?address=$Wallet"
+                    URL      = "https://hashcryptos.com/?address=$Wallet"
                 }
             }
         }
