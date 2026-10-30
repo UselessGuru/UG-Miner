@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -807,16 +807,16 @@ class Miner : IDisposable {
             $this.Earnings_Bias     = [Double]::NaN
         }
         else { 
-            $this.Earnings      = $this.Workers[0].Earnings
-            $this.Earnings_Bias = $this.Workers[0].Earnings_Bias
+            $this.Earnings          = $this.Workers[0].Earnings
+            $this.Earnings_Bias     = $this.Workers[0].Earnings_Bias
+            $this.Earnings_Accuracy = $this.Workers[0].Earnings_Accuracy * $this.Workers[0].Earnings
 
             if ($this.Workers[1]) { 
-                $this.Earnings      += $this.Workers[1].Earnings
-                $this.Earnings_Bias += $this.Workers[1].Earnings_Bias
+                $this.Earnings          += $this.Workers[1].Earnings
+                $this.Earnings_Bias     += $this.Workers[1].Earnings_Bias
+                $this.Earnings_Accuracy += $this.Workers[1].Earnings_Accuracy * $this.Workers[1].Earnings
             }
-
-            $this.Earnings_Accuracy = $this.Workers[0].Earnings_Accuracy * $this.Workers[0].Earnings / $this.Earnings
-            if ($this.Workers[1]) { $this.Earnings_Accuracy += $this.Workers[1].Earnings_Accuracy * $this.Workers[1].Earnings / $this.Earnings }
+            $this.Earnings_Accuracy /= $this.Earnings
 
             $this.IsBenchmarkingOrMeasuring = $false
         }
@@ -838,19 +838,15 @@ class Miner : IDisposable {
 
         $this.Disabled = [Array]::IndexOf($this.Workers.Disabled, $true) -ne -1
 
-        $MinDuration = $this.Workers[0].TotalMiningDuration
-        $MinLastUsed = $this.Workers[0].Updated
-        $MinUpdated  = $this.Workers[0].Pool.Updated
+        $this.TotalMiningDuration = $this.Workers[0].TotalMiningDuration
+        $this.LastUsed            = $this.Workers[0].Updated
+        $this.Updated             = $this.Workers[0].Pool.Updated
 
         if ($this.Workers[1]) { 
-            if ($this.Workers[1].TotalMiningDuration -lt $MinDuration) { $MinDuration = $this.Workers[1].TotalMiningDuration }
-            if ($this.Workers[1].Updated -lt $MinLastUsed)             { $MinLastUsed = $this.Workers[1].Updated }
-            if ($this.Workers[1].Pool.Updated -lt $MinUpdated)         { $MinUpdated  = $this.Workers[1].Pool.Updated }
+            if ($this.Workers[1].TotalMiningDuration -lt $this.TotalMiningDuration) { $this.TotalMiningDuration = $this.Workers[1].TotalMiningDuration }
+            if ($this.Workers[1].Updated -lt $this.LastUsed)                        { $this.LastUsed            = $this.Workers[1].Updated }
+            if ($this.Workers[1].Pool.Updated -lt $this.Updated)                    { $this.Updated             = $this.Workers[1].Pool.Updated }
         }
-
-        $this.TotalMiningDuration = $MinDuration
-        $this.LastUsed            = $MinLastUsed
-        $this.Updated             = $MinUpdated
 
         $this.WindowStyle = if ($this.Benchmark -and $Config.MinerWindowStyleNormalWhenBenchmarking) { "normal" } else { $Config.MinerWindowStyle }
     }
@@ -1338,6 +1334,7 @@ function Get-Rate {
     do { 
         try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
         $APIallowedFailureCount --
+        if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
     } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
     if ($APIerror) { 
@@ -1361,6 +1358,7 @@ function Get-Rate {
         do { 
             try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
             $APIallowedFailureCount --
+            if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
@@ -1374,6 +1372,7 @@ function Get-Rate {
                 do { 
                     try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL/?id=$(($RelevantIDs | Sort-Object -Unique) -join ',')" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
                     $APIallowedFailureCount --
+                    if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
                 if ($APIerror) { 
@@ -1396,6 +1395,7 @@ function Get-Rate {
             do { 
                 try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.RatesMissingCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
                 $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
             } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
@@ -1608,7 +1608,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.1
+    # ZPool24hr & ZPoolPlus removed in v6.9.2
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"
@@ -2153,6 +2153,7 @@ function Get-Stat {
             $FilePath = "$PWD\Stats\$Name.txt"
 
             try { 
+                if (-not [System.IO.File]::Exists($FilePath)) { continue }
                 $FileText = [System.IO.File]::ReadAllText($FilePath)
                 if ([String]::IsNullOrWhiteSpace($FileText)) { continue }
 
@@ -2177,9 +2178,6 @@ function Get-Stat {
                     Disabled              = [Boolean]$Stat.Disabled
                     ToleranceExceeded     = [UInt16]0
                 }
-            }
-            catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { 
-                continue 
             }
             catch { 
                 Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
@@ -3108,22 +3106,21 @@ function Update-AllDAGdata {
         [System.Management.Automation.OrderedHashtable]$DAGdata
     )
 
-    $Handler = [System.Net.Http.HttpClientHandler]::new()
-    $Handler.ServerCertificateCustomValidationCallback = [System.Net.Http.HttpClientHandler]::DangerousAcceptAnyServerCertificateValidator
-    $HttpClient = [System.Net.Http.HttpClient]::new($Handler)
-    $HttpClient.DefaultRequestHeaders.CacheControl = [System.Net.Http.Headers.CacheControlHeaderValue]::Parse("no-cache")
-
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
     $URL = "https://whattomine.com/coins.json"
     if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
-        try { 
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
+        $APIallowedFailureCount = 3
+        do { 
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            $APIallowedFailureCount --
+            if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+        } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
-
+        if ($APIerror) { 
+            Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+        }
+        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CurrencyDAGdataResponse = $APIdata.Content | ConvertFrom-Json)) { 
             if ($CurrencyDAGdataResponse.coins.PSObject.Properties.Name) { 
                 $CurrencyDAGdataResponse.coins.PSObject.Properties.Name.Where{ $CurrencyDAGdataResponse.coins.$_.tag -ne "NICEHASH" }.ForEach{ 
                     if ($AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.coins.$_.algorithm) { 
@@ -3134,7 +3131,7 @@ function Update-AllDAGdata {
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.coins.$_.last_block -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $URL
+                                    $CurrencyDAGdata.URL     = $URL
 
                                     $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
@@ -3152,7 +3149,7 @@ function Update-AllDAGdata {
                 Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
-        catch { 
+        else { 
             Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
@@ -3161,13 +3158,18 @@ function Update-AllDAGdata {
     $URL = "https://pool.rplant.xyz/api/currencies"
     if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
         # Get block data for from whattomine.com
-        try { 
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-            $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            $CurrencyDAGdataResponse = $JSONstring | ConvertFrom-Json
+        $APIallowedFailureCount = 3
+        do { 
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            $APIallowedFailureCount --
+            if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+        } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-            if ($CurrencyDAGdataResponse) { 
+        if ($APIerror) { 
+            Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+        }
+        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CurrencyDAGdataResponse = $APIdata.Content | ConvertFrom-Json)) { 
+            if ($CurrencyDAGdataResponse.PSObject.Properties.Name) { 
                 $CurrencyDAGdataResponse.PSObject.Properties.Name.ForEach{ 
                     $Currency = $_
                     if ($AlgorithmNorm = Get-Algorithm $CurrencyDAGdataResponse.$Currency.algo) { 
@@ -3177,7 +3179,7 @@ function Update-AllDAGdata {
                                 $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2
                                 if ($CurrencyDAGdata.BlockHeight -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
                                     $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $URL
+                                    $CurrencyDAGdata.URL     = $URL
 
                                     $DAGdata.Currency.$Currency = $CurrencyDAGdata
                                 }
@@ -3195,71 +3197,35 @@ function Update-AllDAGdata {
                 Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
-        catch { 
-            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
-        }
-    }
-
-    # Update on script start, once every 24hrs or if unable to get data from source on last attempt
-    $URL = "https://minerstat.com/dag-size-calculator"
-    if ($DAGdata.Updated.$URL -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
-        # Get block data from Minerstat
-        try { 
-            $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-            $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-
-            if ($Response.StatusCode -eq 200) { 
-                $CurrencyDAGdataResponse = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                (($CurrencyDAGdataResponse -split "\n" -replace "`"", "'").Where{ $_ -like "*<div class='block' title='Current block height of *" }).ForEach{ 
-                    $Currency = $_ -replace ".+<div class='block' title='Current block height of " -replace "'>.*$"
-                    if ($Currency -notin @("ETF")) { 
-                        # ETF has invalid DAG data of 444GiB
-                        $BlockHeight = [Math]::Floor(($_ -replace ".+<div class='block' title='Current block height of $Currency'>" -replace "</div>"))
-                        if ($Session.CurrencyAlgorithm[$Currency] -and $BlockHeight -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                            $CurrencyDAGdata = Get-DAGdata -BlockHeight $BlockHeight -Currency $Currency -EpochReserve 2
-                            if ($CurrencyDAGdata.Epoch -and $CurrencyDAGdata.Algorithm -match $Session.RegexAlgoHasDAG) { 
-                                    $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                                    $CurrencyDAGdata.Url     = $URL
-
-                                    $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                            }
-                            else { 
-                                Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
-                            }
-                        }
-                    }
-                }
-                $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
-                Write-Message -Level Info "Loaded DAG data from '$URL'..."
-            }
-            else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $([Int]$Response.StatusCode) $([Uint]$Response.StatusCode)."
-            }
-        }
-        catch { 
+        else { 
             Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
         }
     }
 
     # ZPool also supplies SCC DAG data
-    if (-not ($Session.Config.PoolName -match "ZPool.*")) { 
+    if ($Session.Config.PoolName -notmatch "ZPool.*") { 
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "SCC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $URL = "https://www.coinexplorer.net/api/v1/SCC/block/latest"
             if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from StakeCube block explorer
-                try { 
-                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                    $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).result.height)
+                $APIallowedFailureCount =3
+                do { 
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    $APIallowedFailureCount --
+                    if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+                } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-                    if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                if ($APIerror) { 
+                    Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+                }
+                elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CurrencyDAGdataResponse = [UInt64](($APIdata.Content | ConvertFrom-Json).result.height))) { 
+                    if ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch) { 
                             $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $URL
+                            $CurrencyDAGdata.URL     = $URL
 
                             $DAGdata.Currency.$Currency = $CurrencyDAGdata
                             $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
@@ -3270,7 +3236,7 @@ function Update-AllDAGdata {
                         }
                     }
                 }
-                catch { 
+                else { 
                     Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
@@ -3278,35 +3244,38 @@ function Update-AllDAGdata {
     }
 
     # ZPool also supplies PHI DAG data
-    if (-not ($Session.Config.PoolName -match "^ZPool.*")) { 
+    if ($Session.Config.PoolName -notmatch "^ZPool.*") { 
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "PHI"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $URL = "https://explorer.phicoin.net/api/getblockcount"
             if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from PHI block explorer
-                try { 
-                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                    $CurrencyDAGdataResponse = [UInt64]($JSONstring | ConvertFrom-Json)
+                $APIallowedFailureCount = 3
+                do { 
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    $APIallowedFailureCount --
+                    if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+                } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-                    if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
-                        $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 0
-                        if ($CurrencyDAGdata.Epoch -ge 0) { 
-                            $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $URL
+                if ($APIerror) { 
+                    Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+                }
+                elseif ($APIdata.Content -gt $DAGdata.Currency.$Currency.BlockHeight) { 
+                    $CurrencyDAGdata = Get-DAGdata -BlockHeight $APIdata.Content -Currency $Currency -EpochReserve 0
+                    if ($CurrencyDAGdata.Epoch -ge 0) { 
+                        $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
+                        $CurrencyDAGdata.URL     = $URL
 
-                            $DAGdata.Currency.$Currency = $CurrencyDAGdata
-                            $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
-                            Write-Message -Level Info "Loaded DAG data from '$URL'..."
-                        }
-                        else { 
-                            Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
-                        }
+                        $DAGdata.Currency.$Currency = $CurrencyDAGdata
+                        $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
+                        Write-Message -Level Info "Loaded DAG data from '$URL'..."
+                    }
+                    else { 
+                        Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                     }
                 }
-                catch { 
+                else { 
                     Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
@@ -3314,24 +3283,30 @@ function Update-AllDAGdata {
     }
 
     # Zpool also supplies MEWC DAG data
-    if (-not ($Session.Config.PoolName -match "^ZPool.+")) { 
+    # pool.rplant.xyz also provides DAG information
+    if ($Session.Config.PoolName -notmatch "^ZPool.+") { 
         # Update on script start, once every 24hrs or if unable to get data from source on last attempt
         $Currency = "MEWC"
         if ($Session.CurrencyAlgorithm[$Currency]) { 
             $URL = "https://api.mewccrypto.com/mining-info"
             if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
                 # Get block data from MeowCoin block explorer
-                try { 
-                    $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                    $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                    $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                    $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).block_height)
+                $APIallowedFailureCount = 3
+                do { 
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    $APIallowedFailureCount --
+                    if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+                } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-                    if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+                if ($APIerror) { 
+                    Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+                }
+                elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CurrencyDAGdataResponse = [UInt64]($APIdata.Content | ConvertFrom-Json).block_height)) { 
+                    if ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                         $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                         if ($CurrencyDAGdata.Epoch -ge 0) { 
                             $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                            $CurrencyDAGdata.Url     = $URL
+                            $CurrencyDAGdata.URL     = $URL
 
                             $DAGdata.Currency.$Currency = $CurrencyDAGdata
                             $DAGdata.Updated.$URL = ([DateTime]::Now.ToUniversalTime())
@@ -3342,7 +3317,7 @@ function Update-AllDAGdata {
                         }
                     }
                 }
-                catch { 
+                else { 
                     Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
                 }
             }
@@ -3350,22 +3325,28 @@ function Update-AllDAGdata {
     }
 
     # Update on script start, once every 24hrs or if unable to get data from source on last attempt
+    # pool.rplant.xyz also provides DAG information
     $Currency = "LAX"
     if ($Session.CurrencyAlgorithm[$Currency]) { 
         $URL = "https://explorer.parallaxchain.org/api/v2/stats"
         if ($DAGdata.Currency.$Currency.Updated -lt $Session.ScriptStartTime.AddMinutes(-3) -or $DAGdata.Updated.$URL -lt [DateTime]::Now.ToUniversalTime().AddDays(-1)) { 
             # Get block data from Parallax block explorer
-            try { 
-                $CancellationTokenSource = [System.Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(5))
-                $Response = $HttpClient.GetAsync($URL, $CancellationTokenSource.Token).GetAwaiter().GetResult()
-                $JSONstring = $Response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                $CurrencyDAGdataResponse = [UInt64](($JSONstring | ConvertFrom-Json).total_blocks)
+            $APIallowedFailureCount = 3
+            do { 
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+            } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
 
-                if ($CurrencyDAGdataResponse -ge $DAGdata.Currency.$Currency.BlockHeight) { 
+            if ($APIerror) { 
+                Write-Message -Level Error "Update-AllDAGdata: Query to '$URL' failed ($($APIerror.Message))"
+            }
+            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CurrencyDAGdataResponse = [UInt64](($APIdata.Content | ConvertFrom-Json).total_blocks))) { 
+                if ($CurrencyDAGdataResponse -gt $DAGdata.Currency.$Currency.BlockHeight) { 
                     $CurrencyDAGdata = Get-DAGdata -BlockHeight $CurrencyDAGdataResponse -Currency $Currency -EpochReserve 2
                     if ($CurrencyDAGdata.Epoch -ge 0) { 
                         $CurrencyDAGdata.Updated = [DateTime]::Now.ToUniversalTime()
-                        $CurrencyDAGdata.Url     = $URL
+                        $CurrencyDAGdata.URL     = $URL
 
                         $DAGdata.Currency.$Currency = $CurrencyDAGdata
                         $DAGdata.Updated.$URL       = ([DateTime]::Now.ToUniversalTime())
@@ -3381,7 +3362,6 @@ function Update-AllDAGdata {
             }
         }
     }
-    # }
 
     if ($DAGdata.Updated.Keys.Where{ $DAGdata.Updated.$_ -gt $Session.Timer }) { 
         # At least one DAG was updated, get maximum DAG size per algorithm
@@ -3397,7 +3377,7 @@ function Update-AllDAGdata {
             $DAGdata.Algorithm.$Algorithm.Currency = [String]($CurrencyDAGdataKeys.Where{ $DAGdata.Currency.$_.DAGsize -eq $DAGdata.Algorithm.$Algorithm.DAGsize -and $DAGdata.Currency.$_.Algorithm -eq $Algorithm })
             $DAGdata.Algorithm.$Algorithm.CoinName = [String]$Session.CoinNames[$DAGdata.Algorithm.$Algorithm.Currency]
             $DAGdata.Algorithm.$Algorithm.Updated  = [DateTime]$DAGData.Currency[$DAGdata.Algorithm.$Algorithm.Currency].Updated
-            $DAGdata.Algorithm.$Algorithm.Url      = [String]$DAGData.Currency[$DAGdata.Algorithm.$Algorithm.Currency].Url
+            $DAGdata.Algorithm.$Algorithm.URL      = [String]$DAGData.Currency[$DAGdata.Algorithm.$Algorithm.Currency].URL
         }
 
         # Add default '*' (equal to highest)

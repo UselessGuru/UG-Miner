@@ -1,3 +1,13 @@
+Changelog UG-Miner 6.9.2 2026/10/??
+===================================
+
+Miner changes:
+- BzMiner-v100.52 (update)
+- OneZeroMiner-v1.8.4 (update)
+- SRBMinerMulti-v3.8.1 (update)
+- Wildrig-v1.0.0p(beta) (update)
+
+
 Changelog UG-Miner 6.9.1 2026/10/25
 ===================================
 
@@ -22,7 +32,7 @@ Enhancements:
 - Miner window: Add warmup times to title
 
 Improvements:
-- Balances Tracker: Execute 'Get-Rate' only when really neccesary
+- Balances Tracker: Execute 'Get-Rate' only when really neccessary
 - Core / Include.psm1: Reduce web API calls in function 'Update-AllDAGdata'
 - Core / Include.psm1: Function 'Get-Rate' gets FIAT currency exchange rates from 'https://api.coinlore.net/api/'. Use 'https://api.exchangerate.fun' as fallback.
 - Core / Include.psm1: Remove obsolete code

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module .\Include.psm1
@@ -559,7 +559,7 @@ try {
                     if ($PoolsDeconfiguredCount -gt 0) { $Message = "$Message, removed $PoolsDeconfiguredCount deconfigured pool$(if ($PoolsDeconfiguredCount -gt 1) { "s" })" }
                     if ($Session.PoolsAdded.Count -gt 0) { $Message = "$Message, found $($Session.PoolsAdded.Count) new pool$(if ($Session.PoolsAdded.Count -ne 1) { "s" })" }
                     if ($Session.PoolsUpdated.Count -gt 0) { $Message = "$Message, updated $($Session.PoolsUpdated.Count) existing pool$(if ($Session.PoolsUpdated.Count -ne 1) { "s" })" }
-                    if ($PoolsUnavailable.Count -gt 0) { $Message = "$Message, filtered out $PoolsUnavailableCount pool$(if ($PoolsUnavailableCount -ne 1) { "s" })" }
+                    if ($Session.PoolsUnavailable.Count -gt 0) { $Message = "$Message, filtered out $($Session.PoolsUnavailable.Count) pool$(if ($Session.PoolsUnavailable.Count -ne 1) { "s" })" }
                     $Message = "$($Message). $($PoolsAvailable.Count) available pool$(if ($PoolsAvailable.Count -ne 1) { "s" }) remain$(if ($PoolsAvailable.Count -eq 1) { "s" })."
                     Write-Message -Level Info $Message
                     Remove-Variable Message, PoolsCount
@@ -592,7 +592,7 @@ try {
                 $Session.Pools = $Pools
                 $Session.PoolsBest = $Session.Pools.Where{ $_.Best } | Sort-Object -Property AlgorithmVariant
 
-                Remove-Variable Pools, PoolsDeconfiguredCount, PoolsUnavailableCount -ErrorAction Ignore
+                Remove-Variable Pools, PoolsDeconfiguredCount -ErrorAction Ignore
 
                 # Core suspended with <Ctrl><Alt>P in MainLoop
                 while ($Session.SuspendCycle) { Start-Sleep -Seconds 1 }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Kryptex.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 param(
@@ -49,11 +49,10 @@ if (-not $BrainData.PSObject.Properties.Name) {
 }
 
 # Loop through each available pool
-foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object)) { 
+foreach ($Pool in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object)) { 
 
-    $PoolInfo = $BrainData.$PoolName
-    $AlgorithmNorm = $PoolInfo.AlgorithmNorm
-    $Currency = $PoolInfo.Currency
+    $AlgorithmNorm = $Pool.AlgorithmNorm
+    $Currency = $Pool.Currency
 
     $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
     if ($PoolConfig.UserName) { 
@@ -69,9 +68,9 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
 
     $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
 
-    if ($PoolInfo.estimated_profit_day) { 
+    if ($Pool.estimated_profit_day) { 
         if ($Session.Rates[$Currency]) { 
-            $Value = [Double]($BrainData.$PoolName.estimated_profit_day * $Session.Rates[$Currency]["BTC"])
+            $Value = [Double]($Pool.estimated_profit_day * $Session.Rates[$Currency]["BTC"])
 
             $Stat = Get-Stat -Name "$($Key)_Profit"
             if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
@@ -87,7 +86,7 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
         }
     }
 
-    $PoolInfo.Servers.ForEach{ 
+    $Pool.Servers.ForEach{ 
         $RegionNorm = Get-Region $_.Geo
         if ($Session.Config.Region -eq $RegionNorm) { 
             @{
@@ -96,15 +95,15 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
                 Currency                 = $Currency
                 Disabled                 = $Stat.Disabled
                 EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                Fee                      = $PoolInfo.fee
+                Fee                      = $Pool.fee
                 Host                     = $_.urls[0] -replace ":.+"
                 Key                      = $Key
                 Name                     = $Name
                 Pass                     = "x"
                 Port                     = if ($_.urls[0]) { $_.urls[0] -replace ".+:" } else { $null }
                 PortSSL                  = if ($_.ssl_urls[0]) { $_.ssl_urls[0] -replace ".+:" } else { $null }
-                PoolURL                  = $PoolInfo.URL
-                Price                    = if ($null -eq $PoolInfo.estimated_profit_day) { [Double]::NaN } else { $Stat.Live }
+                PoolURL                  = $Pool.URL
+                Price                    = if ($null -eq $Pool.estimated_profit_day) { [Double]::NaN } else { $Stat.Live }
                 Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
                 Reasons                  = $Reasons
                 Region                   = $RegionNorm
@@ -112,10 +111,10 @@ foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.
                 SSLselfSignedCertificate = $false
                 StablePrice              = $Stat.Week
                 User                     = "$User.$($PoolConfig.WorkerName)"
-                Updated                  = $PoolInfo.Updated
+                Updated                  = $Pool.Updated
                 Variant                  = $Name
                 WorkerName               = $PoolConfig.WorkerName
-                Workers                  = $PoolInfo.workers
+                Workers                  = $Pool.workers
             }
         }
     }

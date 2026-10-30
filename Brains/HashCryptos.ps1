@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -47,6 +47,8 @@ while ($Config.PoolsConfig.$Name) {
     if ($Session.MyIPaddress) { 
         try { 
 
+            $BrainData = @()
+
             $AlgoData = [PSCustomObject]@{ }
             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
             $URL = "https://hashcryptos.com/api/status"
@@ -57,20 +59,23 @@ while ($Config.PoolsConfig.$Name) {
                 try { 
                     Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                 } catch { 
-                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error))"
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
                 }
+                $APIallowedFailureCount --
                 if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
                     # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
                     Start-Sleep -Seconds ([UInt16]($APIdata.Content -replace ".+Only \d request every " -replace " seconds allowed.+") + 1)
                 }
-                $APIallowedFailureCount --
+                elseif (-not $APIdata -and $APIallowedFailureCount -gt 0) { 
+                    Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout
+                }
             } until (($APIdata.StatusCode -in @(200, 404) -and $APIdata.Content -notmatch "Only \d request every \d+ seconds allowed") -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
                 Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
             }
             elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
-                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Content))"
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
             }
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
 
@@ -135,14 +140,14 @@ while ($Config.PoolsConfig.$Name) {
                     Remove-Variable PoolObjectsSampleSizets, PoolObjectsSampleSizeHalfts, SampleSizeHalfts, SampleSizets
 
                     $CurrentPoolObjects = $PoolObjects.Where{ $_.Date -eq $Timestamp }
-                    foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
+                    foreach ($PoolObject in $CurrentPoolObjects) { 
+                        $Algorithm = $PoolObject.Name
                         if ($AlgoGroup = $GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }) { 
                             $PenaltySampleSizeHalf = (($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / ($AlgoGroup.Count * [Math]::abs($AlgoGroup.Median))
                             $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
                             $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
-                            $CurrentPoolObject = $CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }
-                            $Currency = $CurrentPoolObject.currency
-                            $LastPrice = [Double]$CurrentPoolObject.estimate_current
+                            $Currency = $PoolObject.currency
+                            $LastPrice = [Double]$PoolObject.estimate_current
                             $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
 
                             $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
@@ -159,14 +164,13 @@ while ($Config.PoolsConfig.$Name) {
                             $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
                         }
                     }
-                    Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm,APIallowedFailureCount,  BasePrice, Currencies, Currency, CurrentPoolObject, CurrentPoolObjects, Divisor, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, Headers, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName, UserAgent -ErrorAction Ignore
+
+                    $BrainData += $AlgoData.$Algorithm
+                    Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm,APIallowedFailureCount, BasePrice, Currencies, Currency, CurrentPoolObject, CurrentPoolObjects, Divisor, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, Headers, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName, UserAgent -ErrorAction Ignore
                 }
             }
-            else { 
-                $AlgoData = [PSCustomObject]@{ }
-            }
 
-            $Session.BrainData.$Name = $AlgoData
+            $Session.BrainData.$Name = $BrainData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
             if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 

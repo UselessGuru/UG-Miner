@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\ZPool.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 param(
@@ -51,71 +51,66 @@ if (-not $BrainData.PSObject.Properties.Name) {
     return
 }
 
-foreach ($PoolName in ($BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object)) { 
+foreach ($Pool in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object -Property AlgorithmNorm)) { 
 
-    $PoolInfo = $BrainData.$PoolName
+    $AlgorithmNorm = $Pool.AlgorithmNorm
+    $Currency = [String]$Pool.currency
+    $Divisor = [Double]$Pool.mbtc_mh_factor * $DivisorMultiplier
+    $PayoutCurrency = if ($Currency -and $PoolConfig.Wallets.$Currency) { $Currency } else { $PoolConfig.PayoutCurrency }
+    $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
 
-    if ($PoolInfo.$PriceField) { 
+    if (-not $Pool.conversion_supported) { 
+        if (-not $Currency) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+        elseif (-not $PoolConfig.Wallets.$Currency) { [Void]$Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
+    }
+    elseif (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
+    elseif ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+    elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
 
-        $AlgorithmNorm = $PoolInfo.AlgorithmNorm
-        $Currency = [String]$PoolInfo.currency
-        $Divisor = [Double]$PoolInfo.mbtc_mh_factor * $DivisorMultiplier
-        $PayoutCurrency = if ($Currency -and $PoolConfig.Wallets.$Currency) { $Currency } else { $PoolConfig.PayoutCurrency }
-        $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
+    if ($Pool.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
 
-        if (-not $PoolInfo.conversion_supported) { 
-            if (-not $Currency) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
-            elseif (-not $PoolConfig.Wallets.$Currency) { [Void]$Reasons.Add("No wallet address for [$Currency] (conversion disabled at pool)") }
-        }
-        elseif (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
-        elseif ($Session.PoolData.$Name.Algorithm -contains "-$AlgorithmNorm") { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
-        elseif ($Session.PoolData.$Name.Algorithm -like "+*" -and ($Session.PoolData.$Name.Algorithm -split "," -notcontains "+$($AlgorithmNorm)")) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+    $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
+    $Value = $Pool.$PriceField / $Divisor
 
-        if ($PoolInfo.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+    $Stat = Get-Stat -Name "$($Key)_Profit"
+    if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
+        [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
+    }
+    else { 
+        $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+    }
 
-        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
-        $Value = $PoolInfo.$PriceField / $Divisor
+    foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
+        if ($Region = $PoolConfig.Region.Where{ (Get-Region $_) -eq $RegionNorm }) { 
 
-        $Stat = Get-Stat -Name "$($Key)_Profit"
-        if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-            [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
-        }
-        else { 
-            $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
-        }
-
-        foreach ($RegionNorm in $Session.Regions[$Session.Config.Region]) { 
-            if ($Region = $PoolConfig.Region.Where{ (Get-Region $_) -eq $RegionNorm }) { 
-
-                @{ 
-                    Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = $AlgorithmNorm
-                    Currency                 = $Currency
-                    Disabled                 = $Stat.Disabled
-                    EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                    Fee                      = $PoolInfo.Fees / 100
-                    Host                     = "$($PoolInfo.algo).$($Region).$($HostSuffix)"
-                    Key                      = $Key
-                    Name                     = $Name
-                    Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency) { ",zap=$Currency" })"
-                    Port                     = $PoolInfo.port
-                    PortSSL                  = 50000 + [UInt16]($PoolInfo.port)
-                    PoolURL                  = $Poolinfo.URL
-                    Price                    = if ($Stat.Live) { $Stat.Live } else { [Double]::NaN }
-                    Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethproxy" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
-                    Reasons                  = $Reasons
-                    Region                   = $RegionNorm
-                    SendHashrate             = $false
-                    SSLselfSignedCertificate = $true
-                    StablePrice              = $Stat.Week
-                    Updated                  = $PoolInfo.Updated
-                    User                     = $PoolConfig.Wallets.$PayoutCurrency
-                    Variant                  = $PoolVariant
-                    WorkerName               = $PoolConfig.WorkerName
-                    Workers                  = $PoolInfo.workers
-                }
-                break
+            @{ 
+                Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
+                Algorithm                = $AlgorithmNorm
+                Currency                 = $Currency
+                Disabled                 = $Stat.Disabled
+                EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
+                Fee                      = $Pool.Fees / 100
+                Host                     = "$($Pool.algo).$($Region).$($HostSuffix)"
+                Key                      = $Key
+                Name                     = $Name
+                Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency$(if ($Currency) { ",zap=$Currency" })"
+                Port                     = $Pool.port
+                PortSSL                  = 50000 + [UInt16]($Pool.port)
+                PoolURL                  = $Pool.URL
+                Price                    = if ($Stat.Live) { $Stat.Live } else { [Double]::NaN }
+                Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethproxy" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
+                Reasons                  = $Reasons
+                Region                   = $RegionNorm
+                SendHashrate             = $false
+                SSLselfSignedCertificate = $true
+                StablePrice              = $Stat.Week
+                Updated                  = $Pool.Updated
+                User                     = $PoolConfig.Wallets.$PayoutCurrency
+                Variant                  = $PoolVariant
+                WorkerName               = $PoolConfig.WorkerName
+                Workers                  = $Pool.workers
             }
+            break
         }
     }
 }

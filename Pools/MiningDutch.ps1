@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\MiningDutch.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 param(
@@ -54,20 +54,19 @@ if ($DivisorMultiplier -and $PriceField) {
         return
     }
 
-    foreach ($Algorithm in $BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
+    foreach ($Pool in $BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
 
-        $AlgorithmNorm = $BrainData.$Algorithm.AlgorithmNorm
-        $Currency = $BrainData.$Algorithm.currency
-        $Divisor = [Double]$BrainData.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
+        $Currency = $Pool.currency
+        $Divisor = [Double]$Pool.mbtc_mh_factor * $DivisorMultiplier
 
         $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.UserName) { [Void]$Reasons.Add("No username") }
         # Sometimes pool returns $null hashrate for all algorithms
-        if (-not $BrainData.$Algorithm.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
-        # if ($BrainData.$Algorithm.coins -gt 1 -and [Double]$BrainData.$Algorithm.$PriceField -eq 0) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
+        if (-not $Pool.hashrate_shared -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+        # if ($Pool.coins -gt 1 -and [Double]$Pool.$PriceField -eq 0) { [Void]$Reasons.Add("Algorithm@Pool not supported by $($Session.Branding.ProductLabel)") }
  
-        $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
-        $Value = $BrainData.$Algorithm.$PriceField / $Divisor
+        $Key = "$($PoolVariant)_$($Pool.AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
+        $Value = $Pool.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
@@ -82,30 +81,30 @@ if ($DivisorMultiplier -and $PriceField) {
 
                 @{ 
                     Accuracy                 = 1 - [Math]::Min([Math]::Abs($Stat.Week_Fluctuation), 1)
-                    Algorithm                = $AlgorithmNorm
+                    Algorithm                = $Pool.AlgorithmNorm
                     Currency                 = $Currency
                     Disabled                 = $Stat.Disabled
                     EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-                    Fee                      = $BrainData.$Algorithm.Fees / 100
+                    Fee                      = $Pool.Fees / 100
                     Host                     = "$($Region).$($HostSuffix)"
                     Key                      = $Key
                     Name                     = $Name
                     Pass                     = "$($PoolConfig.WorkerName),c=$PayoutCurrency"
-                    Port                     = [UInt16]$BrainData.$Algorithm.port
+                    Port                     = [UInt16]$Pool.port
                     PortSSL                  = 0
                     PoolURL                  = "https://www.mining-dutch.nl/?page=pools"
-                    Price                    = if ($null -eq $BrainData.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
-                    Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
+                    Price                    = if ($null -eq $Pool.$PriceField) { [Double]::NaN } else { $Stat.Live }
+                    Protocol                 = if ($Pool.AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($Pool.AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
                     Reasons                  = $Reasons
                     Region                   = $RegionNorm
                     SendHashrate             = $false
                     SSLselfSignedCertificate = $true
                     StablePrice              = $Stat.Week
-                    Updated                  = $BrainData.$Algorithm.Updated
+                    Updated                  = $Pool.Updated
                     User                     = $PoolConfig.UserName
                     Variant                  = $PoolVariant
                     WorkerName               = $PoolConfig.WorkerName
-                    Workers                  = $BrainData.$Algorithm.workers_shared
+                    Workers                  = $Pool.workers_shared
                 }
                 break
             }

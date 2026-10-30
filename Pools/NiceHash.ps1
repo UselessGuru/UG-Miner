@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 param(
@@ -55,16 +55,16 @@ if (-not $BrainData) {
     return
 }
 
-foreach ($PoolInfo in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object Algorithm)) { 
+foreach ($Pool in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp } | Sort-Object Algorithm)) { 
 
-    $AlgorithmNorm = $PoolInfo.AlgorithmNorm
+    $AlgorithmNorm = $Pool.AlgorithmNorm
     $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
-    if ($PoolInfo.enabled -eq $false) { [Void]$Reasons.Add("Disabled at pool") }
-    if ($PoolInfo.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
-    if ($PoolInfo.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+    if ($Pool.enabled -eq $false) { [Void]$Reasons.Add("Disabled at pool") }
+    if ($Pool.order -eq 0) { [Void]$Reasons.Add("No orders at pool") }
+    if ($Pool.speed -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
 
     $Key = "$($Name)_$($AlgorithmNorm)"
-    $Value = [Double]($PoolInfo.paying / 100000000)
+    $Value = [Double]($Pool.paying / 100000000)
 
     $Stat = Get-Stat -Name "$($Key)_Profit"
     if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
@@ -81,13 +81,13 @@ foreach ($PoolInfo in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollect
         Disabled                 = $Stat.Disabled
         EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
         Fee                      = $Fee
-        Host                     = "$($PoolInfo.algorithm).$PoolHost".ToLower()
+        Host                     = "$($Pool.algorithm).$PoolHost".ToLower()
         Key                      = $Key
         Name                     = $Name
         Pass                     = "x"
         Port                     = 9200
         PortSSL                  = 443
-        PoolURL                  = $Poolinfo.URL
+        PoolURL                  = $Pool.URL
         Price                    = if ($Stat.Live) { $Stat.Live } else { [Double]::NaN }
         Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratumnh" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
         Reasons                  = $Reasons
@@ -95,7 +95,7 @@ foreach ($PoolInfo in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollect
         SendHashrate             = $false
         SSLselfSignedCertificate = $false
         StablePrice              = $Stat.Week
-        Updated                  = $PoolInfo.Updated
+        Updated                  = $Pool.Updated
         User                     = "$($Wallet).$($PoolConfig.WorkerName)"
         Variant                  = $Name
         WorkerName               = $PoolConfig.WorkerName

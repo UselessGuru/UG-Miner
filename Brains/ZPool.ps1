@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -46,6 +46,49 @@ while ($Config.PoolsConfig.$Name) {
 
     if ($Session.MyIPaddress) { 
         try { 
+            $BrainData = @()
+
+            $StatusData = [PSCustomObject]@{ }
+            $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
+            $URL = "https://www.zpool.ca/api/status"
+
+            Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
+            $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
+            do { 
+                try { 
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                } catch { 
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                }
+                $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
+            } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+            if ($APIerror) { 
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
+            }
+            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
+                # Change numeric string to numbers, some values are null
+                $StatusData = ($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json
+                $Timestamp = [DateTime]::Now.ToUniversalTime()
+                if ($StatusData) { 
+                    $StatusData.PSObject.Properties.Name.ForEach{ 
+                        $AlgorithmNorm = Get-Algorithm $_
+
+                        $StatusData.$_ | Add-Member algo $_
+                        $StatusData.$_ | Add-Member AlgorithmNorm $AlgorithmNorm -Force
+                        $StatusData.$_ | Add-Member conversion_supported $true
+                        $StatusData.$_ | Add-Member estimate $StatusData.$_.estimate_current
+                        $StatusData.$_ | Add-Member URL "https://zpool.ca/algo/$($_.ToLower())"
+                        $StatusData.$_ | Add-Member Updated $Timestamp -Force
+
+                        $StatusData.$_.PSObject.Properties.Remove("estimate_current")
+                        $StatusData.$_.PSObject.Properties.Remove("name")
+                        $StatusData.$_.PSObject.Properties.Remove("only_direct")
+                    }
+                    Remove-Variable AlgorithmNorm -ErrorAction Ignore
+                }
+            }
 
             $AlgoData = [PSCustomObject]@{ }
             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
@@ -54,8 +97,13 @@ while ($Config.PoolsConfig.$Name) {
             Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
             $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { 
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                } catch { 
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                }
                 $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
             } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
@@ -88,7 +136,7 @@ while ($Config.PoolsConfig.$Name) {
                         $CurrenciesData.$_ | Add-Member AlgorithmNorm $AlgorithmNorm -Force
                         $CurrenciesData.$_ | Add-Member Currency $Currency -Force
                         $CurrenciesData.$_ | Add-Member conversion_supported (-not $CurrenciesData.$_.only_direct)
-                        $CurrenciesData.$_ | Add-Member URL "https://www.nicehash.com/algorithm/$($CurrenciesData.$_.algo.ToLower())"
+                        $CurrenciesData.$_ | Add-Member URL "https://zpool.ca/coin/$($Currency)"
                         $CurrenciesData.$_ | Add-Member Updated $Timestamp -Force
 
                         if ($AlgorithmNorm -match $Session.RegexAlgoHasDAG -and $CurrenciesData.$Currency.height -gt $Session.DAGdata.Currency.$Currency.BlockHeight) { 
@@ -96,7 +144,7 @@ while ($Config.PoolsConfig.$Name) {
                             $DAGdata = (Get-DAGData -BlockHeight $CurrenciesData.$Currency.height -Algorithm $AlgorithmNorm -Currency $Currency -EpochReserve 2)
                             if ($DAGdata.Epoch -ge 0) { 
                                 $DAGdata.Updated = ([DateTime]::Now).ToUniversalTime()
-                                $DAGdata.Url     = $URL
+                                $DAGdata.URL     = $URL
 
                                 $Session.DAGdata.Currency.$Currency = $DAGdata
                                 $Session.DAGdata.Updated.$URL = [DateTime]::Now.ToUniversalTime()
@@ -105,13 +153,28 @@ while ($Config.PoolsConfig.$Name) {
 
                         $CurrenciesData.$_.PSObject.Properties.Remove("name")
                         $CurrenciesData.$_.PSObject.Properties.Remove("only_direct")
-                    }
 
-                    Remove-Variable Algorithm, AlgorithmNorm, CoinName, Currency, DAGdata -ErrorAction Ignore
+                        $BrainData += $CurrenciesData.$_
+                    }
+                    Remove-Variable AlgorithmNorm, CoinName, Currency, DAGdata -ErrorAction Ignore
                 }
             }
 
-            $Session.BrainData.$Name = $CurrenciesData
+            $StatusData.PSObject.Properties.Name.ForEach{ 
+                $AlgorithmNorm = $StatusData.$_.AlgorithmNorm
+                $Pools = $BrainData.Where{ $_.AlgorithmNorm -eq $AlgorithmNorm }
+                if ($Pools.Count -eq 1) { 
+                    # On pools with only one coin use highest estimate
+                    if ($StatusData.$_.estimate -gt $Pools[0].estimate) { 
+                        $Pools[0].estimate = $StatusData.$_.estimate
+                    }
+                }
+                else {
+                    $BrainData += $StatusData.$_
+                }
+            }
+
+            $Session.BrainData.$Name = $BrainData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
             if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 

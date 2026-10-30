@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\HashCryptos.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 param(
@@ -55,18 +55,18 @@ if ($Wallet -and $DivisorMultiplier -and $PriceField) {
         return
     }
 
-    foreach ($Algorithm in $BrainData.PSObject.Properties.Name.Where{ $BrainData.$_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
-        $AlgorithmNorm = $BrainData.$Algorithm.AlgorithmNorm
-        $Currency = $BrainData.$Algorithm.Currency
-        $Divisor = [Double]$BrainData.$Algorithm.mbtc_mh_factor * $DivisorMultiplier
+    foreach ($Pool in $BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTimeStamp }) { 
+        $AlgorithmNorm = $Pool.AlgorithmNorm
+        $Currency = $Pool.Currency
+        $Divisor = [Double]$Pool.mbtc_mh_factor * $DivisorMultiplier
 
         $Reasons = [System.Collections.Generic.SortedSet[String]]::new()
         if (-not $PoolConfig.Wallets.$PayoutCurrency) { [Void]$Reasons.Add("No wallet address for [$PayoutCurrency]") }
-        if ($BrainData.$Algorithm.hashrate -eq 0 -or $BrainData.$Algorithm.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
+        if ($Pool.hashrate -eq 0 -or $Pool.hashrate_last24h -eq 0 -and -not ($Session.Config.PoolAllow0Hashrate -or $PoolConfig.PoolAllow0Hashrate)) { [Void]$Reasons.Add("No hashrate at pool") }
         if ($PoolConfig.PayoutCurrencies -notcontains $PoolConfig.PayoutCurrency) { [Void]$Reasons.Add("Payout currency [$($PoolConfig.PayoutCurrency)] not supported by by pool") }
 
         $Key = "$($PoolVariant)_$($AlgorithmNorm)$(if ($Currency) { "-$Currency" })"
-        $Value = $BrainData.$Algorithm.$PriceField / $Divisor
+        $Value = $Pool.$PriceField / $Divisor
 
         $Stat = Get-Stat -Name "$($Key)_Profit"
         if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
@@ -82,26 +82,26 @@ if ($Wallet -and $DivisorMultiplier -and $PriceField) {
             Currency                 = $Currency
             Disabled                 = $Stat.Disabled
             EarningsAdjustmentFactor = $PoolConfig.EarningsAdjustmentFactor
-            Fee                      = $BrainData.$Algorithm.Fees / 100
+            Fee                      = $Pool.Fees / 100
             Host                     = $HostSuffix
             Key                      = $Key
             Name                     = $Name
             Pass                     = "x"
-            Port                     = ($BrainData.$Algorithm.port -split " ")[0]
-            PortSSL                  = if (($BrainData.$Algorithm.port -split " ")[2]) { ($BrainData.$Algorithm.port -split " ")[2] } else { $null }
+            Port                     = ($Pool.port -split " ")[0]
+            PortSSL                  = if (($Pool.port -split " ")[2]) { ($Pool.port -split " ")[2] } else { $null }
             PoolURL                  = ""
-            Price                    = if ($null -eq $BrainData.$Algorithm.$PriceField) { [Double]::NaN } else { $Stat.Live }
+            Price                    = if ($null -eq $Pool.$PriceField) { [Double]::NaN } else { $Stat.Live }
             Protocol                 = if ($AlgorithmNorm -match $Session.RegexAlgoIsEthash) { "ethstratum1" } elseif ($AlgorithmNorm -match $Session.RegexAlgoIsProgPow) { "stratum" } else { "" }
             Reasons                  = $Reasons
             Region                   = $PoolConfig.Region
             SendHashrate             = $false
             SSLselfSignedCertificate = $true
             StablePrice              = $Stat.Week
-            Updated                  = $BrainData.$Algorithm.Updated
+            Updated                  = $Pool.Updated
             User                     = "$($Wallet).$($PoolConfig.WorkerName)"
             Variant                  = $PoolVariant
             WorkerName               = $PoolConfig.WorkerName
-            Workers                  = $BrainData.$Algorithm.workers
+            Workers                  = $Pool.workers
         }
     }
 }

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\Kryptex.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -39,7 +39,6 @@ $Durations = [TimeSpan[]]@()
 
 while ($Config.PoolsConfig.$Name) { 
 
-    $PoolVariant = [String]$Session.Config.PoolName.Where{ $_ -like "$Name*" }
     $StartTime = [DateTime]::Now
 
     Write-Message -Level Debug "Brain '$Name': Start loop$(if ($Duration) { " (Previous loop duration: $Duration sec.)" })"
@@ -49,11 +48,18 @@ while ($Config.PoolsConfig.$Name) {
             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
             $URL = "https://pool.kryptex.com/api/v1/index"
 
+            $BrainData = @()
+
             Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
             $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { 
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                } catch { 
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                }
                 $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
             } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
@@ -63,7 +69,6 @@ while ($Config.PoolsConfig.$Name) {
                 if ($PoolsList = $APIdata.Content | ConvertFrom-Json) { 
 
                     $Timestamp = [DateTime]::Now.ToUniversalTime()
-                    $PoolData = [PScustomObject]@{ }
 
                     if (-not $Session.KryptexCurrencies) { 
                         $Session.KryptexCurrencies = @($Session.PoolData.Kryptex.GuaranteedPayoutCurrencies)
@@ -79,8 +84,13 @@ while ($Config.PoolsConfig.$Name) {
                             $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
                             Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
                             do { 
-                                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                               try { 
+                                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                                } catch { 
+                                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                                }
                                 $APIallowedFailureCount --
+                                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
                             } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
                             if ($APIerror) { 
@@ -113,20 +123,19 @@ while ($Config.PoolsConfig.$Name) {
                                     $PoolInfo.PSObject.Properties.Remove("symbol")
                                     $PoolInfo.PSObject.Properties.Remove("ticker")
 
-                                    $PoolData | Add-Member $PoolName $PoolInfo
+                                    $BrainData += $PoolInfo
                                 }
                             }
                             Remove-Variable PoolInfo -ErrorAction Ignore
                         }
                     }
-
-                    $Session.BrainData.$Name = $PoolData
-                    $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
-
-                    if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                        ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
-                    }
                 }
+            }
+            $Session.BrainData.$Name = $BrainData
+            $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
+
+            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
         }
         catch { 
@@ -150,4 +159,4 @@ while ($Config.PoolsConfig.$Name) {
     }
 }
 
-Remove-Variable BrainDataFile, Duration, Durations, DurationsAvg, Handler, Name, PoolConfig, PoolObjects, PoolVariant, StartTime, TimeStamp, UserAgent -ErrorAction Ignore
+Remove-Variable BrainDataFile, Duration, Durations, DurationsAvg, Handler, Name, PoolConfig, PoolObjects, StartTime, TimeStamp, UserAgent -ErrorAction Ignore

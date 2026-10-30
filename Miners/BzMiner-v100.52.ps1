@@ -17,20 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
-# NEW DUAL MINING PEARL + C29! (Nvidia only, see below)
-# c29 improvement on 6gb gpus
-# fixed (again) amd gpus not mining on mmpos
-# bc250 enabled cu's are now opt-in
-# bc250 now allows core lock below 1500
-# updated docs to explain more about bc250 options
+# fixed pearl hashrate for nvidia Blackwell
+# optimized quantus on nvidia Blackwell
+# optimized pearl + c29 for amd rdna 1-4
+# bz now resets oc's correctly when oc hotkeys are used
+# fixed amd gpus not showing up on mmpos
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URL = "https://github.com/bzminer/bzminer/releases/download/v100.51/bzminer_v100.51_windows.zip"
+$URL = "https://github.com/bzminer/bzminer/releases/download/v100.52/bzminer_v100.52_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"

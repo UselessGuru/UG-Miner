@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.1.10"
+$APIversion = "6.1.12"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -64,20 +64,20 @@ while ($Session.APIversion -and $Server.IsListening) {
     $Request = $Context.Request
 
     # Determine the requested resource and parse query strings
-    $Path = $Request.Url.LocalPath
+    $Path = $Request.URL.LocalPath
 
     if ($Request.HttpMethod -eq "GET") { 
-        # Parse any parameters in the URL - $Request.Url.Query looks like "+ ?a=b&c=d&message=Hello%20world"
+        # Parse any parameters in the URL - $Request.URL.Query looks like "+ ?a=b&c=d&message=Hello%20world"
         # Decode any url escaped characters in the key and value
         $Parameters = @{ }
-        ($Request.Url.Query -replace "\?" -split "&").ForEach{ 
+        ($Request.URL.Query -replace "\?" -split "&").ForEach{ 
             $Key, $Value = $_ -split "="
             # Decode any url escaped characters in the key and value
             $Key = [System.Web.HttpUtility]::UrlDecode($Key)
             $Value = [System.Web.HttpUtility]::UrlDecode($Value)
             if ($Key -and $Value) { $Parameters.$Key = $Value }
         }
-        if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url)" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+        if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.URL)" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
     }
     elseif ($Request.HttpMethod -eq "POST") { 
         $Length = $Request.contentlength64
@@ -86,7 +86,7 @@ while ($Session.APIversion -and $Server.IsListening) {
         [Void]$Request.inputstream.read($Buffer, 0, $Length)
         $Body = [Text.Encoding]::ascii.getstring($Buffer)
 
-        if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.Url) POST:$Body" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+        if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): $($Request.URL) POST:$Body" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
 
         $Parameters = @{ }
         ($Body -split "&").ForEach{ 
@@ -871,27 +871,27 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/pools" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/added" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsAdded | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsAdded | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/available" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where{ $_.Available } | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.Pools.Where{ $_.Available } | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/best" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsBest | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsBest | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/expired" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsExpired | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsExpired | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/new" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsNew | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsNew | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/lastearnings" { 
@@ -903,11 +903,11 @@ while ($Session.APIversion -and $Server.IsListening) {
             break
         }
         "/pools/unavailable" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsUnavailable | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsUnavailable | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/pools/updated" { 
-            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsUpdated | Sort-Object -Property Algorithm, Name, Region)
+            $Data = ConvertTo-Json -Depth 10 @($Session.PoolsUpdated | Sort-Object -Property AlgorithmVariant, Currency, Name, Region)
             break
         }
         "/poolreasons" { 

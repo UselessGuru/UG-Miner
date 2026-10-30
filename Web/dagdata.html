@@ -5,7 +5,7 @@
           <div name="add-updatedtimestamp" class="alert alert-info" role="alert">This is the DAG data.</div>
           <h3>Algorithm DAG data</h3>
           <table id="dagdataalgorithm" class="table"
-            data-cache="false"
+            data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
             data-cookie-id-table="dagdataalgorithm"
@@ -39,7 +39,7 @@
                 <th data-field="Epoch" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Epoch</th>
                 <th data-field="BlockHeight" data-sortable="true" data-filter-strict-search="false">Block height</th>
                 <th data-field="Updated" data-sortable="true" data-filter-strict-search="false">Updated</th>
-                <th data-field="Url" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Source Url</th>
+                <th data-field="URL" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Source URL</th>
               </tr>
             </thead>
           </table>
@@ -47,7 +47,7 @@
           <br>
           <h3>Currency DAG data</h3>
           <table id="dagdatacurrency" class="table"
-            data-cache="false"
+            data-cache="true"
             data-click-to-select="true"
             data-cookie="true"
             data-cookie-id-table="dagdatacurrency"
@@ -81,7 +81,7 @@
                 <th data-field="Epoch" data-sortable="true" data-filter-control="select" data-filter-strict-search="false">Epoch</th>
                 <th data-field="BlockHeight" data-sortable="true" data-filter-strict-search="false">BlockHeight</th>
                 <th data-field="Updated" data-sortable="true" data-filter-strict-search="false">Updated</th>
-                <th data-field="Url" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">Url</th>
+                <th data-field="URL" data-sortable="true" data-filter-control="input" data-filter-strict-search="false">URL</th>
               </tr>
             </thead>
           </table>
@@ -95,7 +95,7 @@
               $.each(data, function(index, item) {
                 // Format DAG siez to GiB
                 item.DAGsize = formatBytes(item.DAGsize);
-                if (item.Url) item.Url = '<a href="' + item.Url + '" target="_blank">' + item.Url + '</a>';
+                if (item.URL) item.URL = '<a href="' + item.URL + '" target="_blank">' + item.URL + '</a>';
                 if (item.Updated) item.Updated = formatTimeSince(item.Updated);
               });
               return data;

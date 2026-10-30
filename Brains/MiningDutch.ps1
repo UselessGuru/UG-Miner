@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -47,6 +47,8 @@ while ($Config.PoolsConfig.$Name) {
     if ($Session.MyIPaddress) { 
         try { 
 
+            $BrainData = @()
+
             $AlgoData = [PSCustomObject]@{ }
             $Session."$($Name)APIrequestTimestamp" = [DateTime]::Now.ToUniversalTime()
             $URL = "https://www.mining-dutch.nl/api/v1/public/pooldata/?method=totalstats"
@@ -57,20 +59,23 @@ while ($Config.PoolsConfig.$Name) {
                 try { 
                     Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                 } catch { 
-                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error))"
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
                 }
+                $APIallowedFailureCount --
                 if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
                     # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
                     Start-Sleep -Seconds ([UInt16]($APIdata.Content -replace ".+Only \d request every " -replace " seconds allowed.+") + 1)
                 }
-                $APIallowedFailureCount --
+                elseif (-not $APIdata -and $APIallowedFailureCount -gt 0) { 
+                    Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout
+                }
             } until (($APIdata.StatusCode -in @(200, 404) -and $APIdata.Content -notmatch "Only \d request every \d+ seconds allowed") -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
                 Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
             }
             elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
-                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Content))"
+                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
             }
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
                 if ($TotalStatsResult = (($APIdata.Content -replace ":`"(\d+\.?\d*)`"", ":`$1" -replace "`":null", "`":0") | ConvertFrom-Json).result) {  
@@ -81,7 +86,7 @@ while ($Config.PoolsConfig.$Name) {
                         try { 
                             Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                         } catch { 
-                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error))"
+                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
                         }
                         if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
                             # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
@@ -94,7 +99,7 @@ while ($Config.PoolsConfig.$Name) {
                         Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
                     }
                     elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
-                        Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Content))"
+                        Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
                     }
                     elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
                         $Timestamp = [DateTime]::Now.ToUniversalTime()
@@ -166,18 +171,19 @@ while ($Config.PoolsConfig.$Name) {
                             Remove-Variable PoolObjectsSampleSizets, PoolObjectsSampleSizeHalfts, SampleSizeHalfts, SampleSizets
 
                             $CurrentPoolObjects = $PoolObjects.Where{ $_.Date -eq $Timestamp }
-                            foreach ($Algorithm in ($PoolObjects.Name | Select-Object -Unique).Where{ $AlgoData.PSObject.Properties.Name -contains $_ }) { 
+                            foreach ($PoolObject in $CurrentPoolObjects) { 
+                                $Algorithm = $PoolObject.Name
                                 if ($Algogroup = $GroupMedSampleSizeHalf.Where{ $_.Name -eq $Algorithm }) { 
                                     $PenaltySampleSizeHalf = (($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSizeHalf.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / ($Algogroup.Count * [Math]::abs($Algogroup.Median))
                                     $PenaltySampleSizeNoPercent = ((($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Up" }).Count - ($GroupAvgSampleSize.Where{ $_.Name -eq $Algorithm + ", Down" }).Count) / (($GroupMedSampleSize.Where{ $_.Name -eq $Algorithm }).Count)) * [Math]::abs(($GroupMedSampleSizeNoPercent.Where{ $_.Name -eq $Algorithm }).Median)
                                     $Penalty = ($PenaltySampleSizeHalf * $Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + $PenaltySampleSizeNoPercent) / ($Config.PoolsConfig.$Name.BrainConfig.SampleHalfPower + 1)
-                                    $LastPrice = [Double]$CurrentPoolObjects.Where{ $_.Name -eq $Algorithm }.estimate_current
+                                    $LastPrice = [Double]$PoolObject.estimate_current
                                     $PlusPrice = [Math]::max(0, [Double]($LastPrice + $Penalty))
 
-                                    $StatName = if ($Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
+                                    $StatName = if ($PoolObject.Currency) { "$($PoolVariant)_$(Get-Algorithm $Algorithm)-$($PoolObject.Currency)_Profit" } else { "$($PoolVariant)_$(Get-Algorithm $Algorithm)_Profit" }
                                     # Reset history if current estimate is not within +/- 1000% of 24hr stat price
                                     if ($Stat = Get-Stat -Name $StatName) { 
-                                        $Divisor = $Config.PoolsConfig.$Name.Variant."$PoolVariant".DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
+                                        $Divisor = $Config.PoolsConfig.$Name.Variant.$PoolVariant.DivisorMultiplier * $AlgoData.$Algorithm.mbtc_mh_factor
                                         if ($Stat.Day -and $LastPrice -gt 0 -and ($AlgoData.$Algorithm.estimate_current / $Divisor -lt $Stat.Day / 10 -or $AlgoData.$Algorithm.estimate_current / $Divisor -gt $Stat.Day * 10)) { 
                                             Remove-Stat -Name $StatName
                                             $PoolObjects = $PoolObjects.Where{ $_.Name -ne $Algorithm }
@@ -186,15 +192,18 @@ while ($Config.PoolsConfig.$Name) {
                                         }
                                     }
                                     $AlgoData.$Algorithm | Add-Member PlusPrice $PlusPrice -Force
+                                    $AlgoData.$Algorithm | Add-Member Updated $TimeStamp -Force
+
+                                    $BrainData += $AlgoData.$Algorithm
                                 }
                             }
                         }
                     }
                 }
             }
-            Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm, Baseprice, Currency, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, Stat, StatName -ErrorAction Ignore
+            Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm, Baseprice, Currency, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolObject, Stat, StatName -ErrorAction Ignore
 
-            $Session.BrainData.$Name = $AlgoData
+            $Session.BrainData.$Name = $BrainData
             $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
             if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 

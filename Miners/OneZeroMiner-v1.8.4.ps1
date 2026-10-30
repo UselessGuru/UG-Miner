@@ -17,18 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
-# Performance improvement for 20xx, 30xx, 40xx, and 50xx series (locked mem 810 kernel)
-# Fixed the H100 invalid proof size of v1.8.2
-# Fixed a bug related to the invalid hits messages
-# Fixed a bug that could cause rejected shares if the gpu was shared with an another process
+# Efficiency improvement for 30xx, 40xx, and 50xx series (~2%)
+# Minor performance improvement of both kernel 1 and kernel 2 for Turing (20xx series and CMP 50hx)
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") })) { return }
 
-$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.3/onezerominer-win64-1.8.3.zip"
+$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.4/onezerominer-win64-1.8.4.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"

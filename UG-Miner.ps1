@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module .\Includes\Include.psm1
@@ -286,7 +286,7 @@ $Global:VerbosePreference     = "SilentlyContinue"
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.7"
+$RecommendedPWSHversion = [Version]"7.6.9"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -324,7 +324,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.9.1"
+    Version      = [System.Version]"6.9.2"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -708,11 +708,23 @@ if ($Session.FreshConfig -and (Get-Command "Get-MpPreference") -and (Get-MpCompu
 # Unblock files
 if ((Get-Item -Path $MyInvocation.MyCommand.Path -Stream Zone.Identifier -ErrorAction Ignore) -or (Get-Item -Path "$($PSHOME)\*" -Stream Zone.* -ErrorAction Ignore)) { 
     if (Get-Command "Unblock-File" -ErrorAction Ignore) { 
-        Write-Message -Level Verbose "Unblocking files that were downloaded from the internet..."
-        Get-ChildItem -Path . -Recurse | Unblock-File
-        Get-ChildItem -Path "$($PSHOME)\*" -Recurse | Unblock-File
-        [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
-        Write-Host " ✔" -ForegroundColor Green
+        try  { 
+            Write-Message -Level Verbose "Unblocking files that were downloaded from the internet..."
+            if (-not $Session.IsLocalAdmin) { 
+                Write-Host "You must accept the UAC control dialog to continue." -ForegroundColor Blue -NoNewline
+                Start-Sleep -Seconds 5
+            }
+            Start-Process "pwsh" "-Command Write-Host 'Unblocking files that were downloaded from the internet...'; Get-ChildItem -Path `$PWD -Recurse | Unblock-File;  Get-ChildItem -Path `$PSHOME -Recurse | Unblock-File" -Verb runAs
+            [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+            Write-Host " ✔" -ForegroundColor Green
+        }
+        catch { 
+            [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
+            Write-Host " ✖" -ForegroundColor Red
+            Write-Message -Level Error "Cannot unblock files that were downloaded from the internet. $($Session.Branding.ProductLabel) will shut down."
+            (New-Object -ComObject Wscript.Shell).Popup("Could not exclude the directory`n'$PWD'`n from Microsoft Defender Antivirus scans.`nThis would lead to unpredictable results.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+            exit
+        }
     }
     else { 
         [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)

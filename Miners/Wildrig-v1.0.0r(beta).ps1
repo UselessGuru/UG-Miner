@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
-# minor pearlhash improvements to NVIDIA Ampere, Ada and BlackwellA100/CMP170HX gpu's
-# improved pearlhash for NVIDIA A100/CMP170HX
-# improved pearlhash for AMD RDNA2 and RDNA3
+# improved pearlhash efficiency for NVIDIA Ampere, Ada and Blackwell gpu's
+# improved quantus for NVIDIA Ampere, Ada and Blackwell gpu's
+# fixed support for Intel Arc B Pro gpu's
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN?$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "7.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0o/wildrig-ng-windows-1.0.0o.zip"
+$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0r/wildrig-ng-windows-1.0.0r.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig-ng.exe"
 $DeviceEnumerator = "Type_Slot"

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\ZPool.ps1
-Version:        6.9.1
-Version date:   2026/10/25
+Version:        6.9.2
+Version date:   2026/10/30
 #>
 
 using module ..\Includes\Include.psm1
@@ -52,8 +52,13 @@ while ($Config.PoolsConfig.$Name) {
             $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
             Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { 
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                } catch { 
+                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                }
                 $APIallowedFailureCount --
+                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
             } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
@@ -65,8 +70,13 @@ while ($Config.PoolsConfig.$Name) {
                     $URL = "https://api2.nicehash.com/main/api/v2/public/simplemultialgo/info/"
                     Write-Message -Level Debug "Brain '$Name': Querying '$URL'"
                     do { 
-                        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                        try { 
+                            Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                        } catch { 
+                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                        }
                         $APIallowedFailureCount --
+                        if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds $Config.PoolsConfig.$Name.PoolAPItimeout }
                     } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
                     if ($APIerror) { 
