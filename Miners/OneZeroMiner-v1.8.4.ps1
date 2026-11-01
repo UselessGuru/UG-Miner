@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.2
-Version date:   2026/10/30
+Version:        6.9.3
+Version date:   2026/11/01
 #>
 
 # Efficiency improvement for 30xx, 40xx, and 50xx series (~2%)

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Trex.ps1
-Version:        6.9.2
-Version date:   2026/10/30
+Version:        6.9.3
+Version date:   2026/11/01
 #>
 
 [NoRunspaceAffinity()]
@@ -30,7 +30,7 @@ class Trex : Miner {
         $Request = "http://127.0.0.1:$($this.Port)/summary"
 
         try { 
-            $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout
+            $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout 2>$null 3>$null 4>$null 5>$null 6>$null
             if (-not $Data) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }

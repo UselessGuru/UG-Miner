@@ -38,7 +38,7 @@
   "PayoutCurrency": "[Default]",
   "PoolAPIAllowedFailureCount": 3,
   "PoolAPIretryInterval": 3,
-  "PoolAPItimeout": 5,
+  "PoolAPItimeout": 10,
   "Variant": {
     "Kryptex": {
     }

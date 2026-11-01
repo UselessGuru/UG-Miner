@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.2
-Version date:   2026/10/30
+Version:        6.9.3
+Version date:   2026/11/01
 #>
 
 using module ..\Includes\Include.psm1
@@ -59,7 +59,7 @@ while ($Config.PoolsConfig.$Name) {
                 try { 
                     Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                 } catch { 
-                    Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                    Remove-Variable APIerror -ErrorAction Ignore; ; Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
                 }
                 $APIallowedFailureCount --
                 if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
@@ -86,7 +86,7 @@ while ($Config.PoolsConfig.$Name) {
                         try { 
                             Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                         } catch { 
-                            Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($Error[0] | ConvertTo-Json -Compress))"
+                            Remove-Variable APIerror -ErrorAction Ignore; ; Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
                         }
                         if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
                             # Write-Message -Level Warn "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"

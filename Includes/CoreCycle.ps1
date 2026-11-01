@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.2
-Version date:   2026/10/30
+Version:        6.9.3
+Version date:   2026/11/01
 #>
 
 using module .\Include.psm1
@@ -865,7 +865,7 @@ try {
                 }
             } | Sort-Object -Property Info
         )
-        Remove-Variable Algorithm, BaseName, i, IsIgnoreFee, M, Miner, MinerFile, Miners, MinerPools, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
+        Remove-Variable BaseName, i, IsIgnoreFee, M, Miner, MinerFile, Miners, MinerPools, Parts, Pool, Worker, Workers, WorkerStrings -ErrorAction Ignore
 
         $DeviceMap = [System.Collections.Generic.Dictionary[String, Object]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($Device in $Session.EnabledDevices) {
@@ -1067,7 +1067,7 @@ try {
                 try { 
                     if (-not $Session.IsLocalAdmin) { 
                         Write-Message -Level Info "Initiating request to add inbound firewall rule$(if ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(if ($MissingFirewallRules.Count -ne 1) { "s" })..."
-                        Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(if ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(if ($MissingFirewallRules.Count -ne 1) { "s" })...';  Write-Host ''; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json).ForEach{ New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Session.Branding.ProductLabel) $($Session.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Session.Branding.ProductLabel)'; `$Message = 'Added inbound firewall rule for ' + (Split-Path `$_ | Split-Path -leaf) + '.'; Write-Host `$Message }; Write-Host ''; Write-Host 'Added $($MissingFirewallRules.Count) inbound firewall rule$(if ($MissingFirewallRules.Count -ne 1) { "s" }).'; Start-Sleep -Seconds 3" -replace "`"", "\`"") -Verb runAs
+                        Start-Process "pwsh" ("-Command Write-Host 'Adding inbound firewall rule$(if ($MissingFirewallRules.Count -ne 1) { "s" }) for $($MissingFirewallRules.Count) miner$(if ($MissingFirewallRules.Count -ne 1) { "s" })...';  Write-Host ''; Import-Module NetSecurity; ('$($MissingFirewallRules | ConvertTo-Json -Compress)' | ConvertFrom-Json -ErrorAction Ignore).ForEach{ New-NetFirewallRule -DisplayName (Split-Path `$_ | Split-Path -leaf) -Program `$_ -Description 'Inbound rule added by $($Session.Branding.ProductLabel) $($Session.Branding.Version) on $([DateTime]::Now.ToString())' -Group '$($Session.Branding.ProductLabel)'; `$Message = 'Added inbound firewall rule for ' + (Split-Path `$_ | Split-Path -leaf) + '.'; Write-Host `$Message }; Write-Host ''; Write-Host 'Added $($MissingFirewallRules.Count) inbound firewall rule$(if ($MissingFirewallRules.Count -ne 1) { "s" }).'; Start-Sleep -Seconds 3" -replace "`"", "\`"") -Verb runAs
                     }
                     else { 
                         Import-Module NetSecurity
@@ -1245,7 +1245,7 @@ try {
         #region Stop miners
         foreach ($Miner in ($Miners.Where{ $_.Status -eq [MinerStatus]::Running -or $_.Status -eq [MinerStatus]::DryRun } | Sort-Object { $_.BaseName_Version_Device.Split('-')[-1] })) { 
 
-            if (($Miner.Benchmark -or $Miner.MeasurePowerConsumption) -and $Miner.IsBenchmarkingOrMeasuring) { 
+            if (($Miner.Benchmark -or $Miner.MeasurePowerConsumption) -and $Miner.IsBenchmarkingOrMeasuring -and -not [Boolean]$Miner.Workers.Pool.Disabled) { 
                 # Do not stop running benchmarking / measuring miners
                 continue
             }
@@ -1459,7 +1459,7 @@ try {
                                 MinerBaseName_Version_Device = $Miner.BaseName_Version_Device
                                 MinerName                    = $Miner.Name
                                 MinerVersion                 = $Miner.Version
-                                Key                      = $Worker.Pool.Key
+                                PoolKey                      = $Worker.Pool.Key
                                 PoolName                     = $Worker.Pool.Name
                                 PoolRegion                   = $Worker.Pool.Region
                                 PoolVariant                  = $Worker.Pool.Variant
