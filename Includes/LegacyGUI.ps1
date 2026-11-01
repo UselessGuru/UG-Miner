@@ -981,6 +981,9 @@ $LegacyGUIelements.ButtonPause.Add_Click(
     { 
         if ($Session.NewMiningStatus -ne "Paused" -and -not $Session.SuspendCycle) { 
             $Session.NewMiningStatus = "Paused"
+            $LegacyGUIelements.ButtonPause.Enabled = $false
+            $LegacyGUIelements.ButtonStart.Enabled = $false
+            $LegacyGUIelements.ButtonStop.Enabled = $false
             $Session.RestartCycle = $true
             $Session.SuspendCycle = $false
         }
@@ -999,6 +1002,9 @@ $LegacyGUIelements.ButtonStart.Add_Click(
     { 
         if ($Session.NewMiningStatus -ne "Running") { 
             $Session.NewMiningStatus = "Running"
+            $LegacyGUIelements.ButtonPause.Enabled = $false
+            $LegacyGUIelements.ButtonStart.Enabled = $false
+            $LegacyGUIelements.ButtonStop.Enabled = $false
             $Session.RestartCycle = $true
             $Session.SuspendCycle = $false
         }
@@ -1017,6 +1023,9 @@ $LegacyGUIelements.ButtonStop.Add_Click(
     { 
         if ($Session.NewMiningStatus -ne "Idle") { 
             $Session.NewMiningStatus = "Idle"
+            $LegacyGUIelements.ButtonPause.Enabled = $false
+            $LegacyGUIelements.ButtonStart.Enabled = $false
+            $LegacyGUIelements.ButtonStop.Enabled = $false
             $Session.RestartCycle = $true
             $Session.SuspendCycle = $false
         }
