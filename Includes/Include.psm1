@@ -1345,7 +1345,7 @@ function Get-Rate {
         $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } }
         foreach ($Currency in $Session.AllCurrencies) { 
             if ($FIATexchangeRates.$Currency -and $Currency -ne "USD") { 
-                $Rates.USD.$Currency = 1.0 / [Double]$FIATexchangeRates.$Currency
+                $Rates.USD.$Currency = [Double]$FIATexchangeRates.$Currency
             }
         }
         Remove-Variable Currency -ErrorAction Ignore
@@ -1380,20 +1380,21 @@ function Get-Rate {
                 }
                 elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreTicker = $APIdata.Content | ConvertFrom-Json)) { 
                     $CoinloreTicker.ForEach{ 
-                        if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double]$_.price_usd }
+                        if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double](1 / $_.price_usd) }
                     }
                 }
             }
         }
         Remove-Variable APIdata, APIerror, CoinloreAssetsData, CoinloreTicker, RelevantIDs, URL -ErrorAction Ignore
 
-        $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @((@($Session.AllCurrencies | Select-Object) + @("USD")) | Select-Object) -PassThru
+        $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
         if ($Session.RatesMissingCurrencies) { 
             $URL = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price?symbol"
             Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
             $APIallowedFailureCount = 3
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.RatesMissingCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                # try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.RatesMissingCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.AllCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
                 $APIallowedFailureCount --
                 if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
             } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
@@ -1402,9 +1403,9 @@ function Get-Rate {
                 Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($(($APIerror.Message | ConvertFrom-Json).status.error_message))"
             }
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinMarketCapPriceSymbol = ($APIdata.Content | ConvertFrom-Json).data)) { 
-                $CoinMarketCapPriceSymbol.ForEach{ $Rates.USD.($_.Symbol) = [Double]$_.Quotes.Where{ $_.symbol -EQ "USD" }.price } 
+                $CoinMarketCapPriceSymbol.ForEach{ $Rates.USD.($_.Symbol) = 1 / [Double]($_.Quotes.Where{ $_.symbol -EQ "USD" }.price) } 
             }
-            $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @((@($Session.AllCurrencies | Select-Object) + @("USD")) | Select-Object) -PassThru
+            $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
             Remove-Variable APIdata, APIerror, CoinMarketCapPriceSymbol -ErrorAction Ignore
         }
         Remove-Variable Currency, FIATexchangeRates, RequestUrl -ErrorAction Ignore
@@ -1415,14 +1416,14 @@ function Get-Rate {
             # Add mBTC
             if ($Session.Config.UsemBTC) { 
                 $Currencies += "mBTC"
-                $Rates.USD."mBTC" = [Double]($Rates.USD.BTC / 1000)
+                $Rates.USD."mBTC" = [Double]($Rates.USD.BTC * 1000)
             }
 
-            $Currencies.Where{ $_ -ne "USD" }.ForEach{ 
+            $Rates.USD.Keys.Where{ $_ -ne "USD" }.ForEach{ 
                 $Currency = $_
                 $Rates.$Currency = [System.Collections.SortedList]@{ }
                 $Rates.USD.Keys.ForEach{ 
-                    $Rates.$Currency.$_ = [Double]($Rates.USD.$Currency / $Rates.USD.$_)
+                    $Rates.$Currency.$_ = [Double]($Rates.USD.$_ / $Rates.USD.$Currency)
                 }
             }
             Remove-Variable Currency -ErrorAction Ignore

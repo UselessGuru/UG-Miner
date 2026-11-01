@@ -2,6 +2,7 @@ Changelog UG-Miner 6.9.3 2026/11/01
 ===================================
 
 Fixes:
+- Core / Includes.psm1: Function 'Get-Rate' calculated incorrect exchange rates for crypto currencies (regression from v6.9.0)
 - Core: Not stopping benchmarking or power usage meassuring miners when pool becomes disabled
 
 Miner changes:
