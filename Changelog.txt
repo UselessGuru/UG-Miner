@@ -3,8 +3,8 @@ Changelog UG-Miner 6.9.4 2026/11/12
 
 Fixes:
 - Core: Rework pool handling, do no longer keep pools and depreciate over 24hr.
-- Core: No more 'No miners found' message after stopping and restarting mining processes (regreession from 6.9.1)
-- Core: Make Cionmarketcap the primary currency exchange rate provider (may eliminate queries to additional API providers)
+- Core: No more 'No miners found' message after stopping and restarting mining processes (regression from 6.9.1)
+- Core: Make Coinmarketcap the primary currency exchange rate provider (may eliminate queries to additional API providers)
 - Pool Kryptex: Error in pool file 'Pools\Kryptex.ps1'
 
 Enhancements:
