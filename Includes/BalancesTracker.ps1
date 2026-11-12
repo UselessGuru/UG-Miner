@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
 Version:        6.9.3
-Version date:   2026/11/01
+Version date:   2026/11/12
 #>
 
 using module .\Include.psm1
@@ -79,7 +79,7 @@ do {
         # Fetch balances data from pools
         if ($PoolsToTrack) { 
             Write-Message -Level Info "Balances tracker is requesting data from pool$(if ($PoolsToTrack.Count -gt 1) { "s" }) $($PoolsToTrack -join ", " -replace ",([^,]*)$", " &`$1")..."
-            if ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
+            # if ($PoolsToTrack -contains "MiningDutch") { $PoolsToTrack = [String[]]($PoolsToTrack -notmatch "MiningDutch"); $PoolsToTrack += "MiningDutch" } # MiningDutch takes a very long time, get data last
             $PoolsToTrack.ForEach{ 
                 try { 
                     Write-Message -Level Debug "BalancesTracker '$_': Start building balances objects"
@@ -110,7 +110,7 @@ do {
             $BalanceObjects = $BalanceObjects.Where{ $_.Unpaid -gt 0 -or $_.Balance -gt 0 -or $_.DateTime -gt $Now.AddDays(-7) }
 
             foreach ($BalanceObject in $BalanceObjects) { 
-                $BalanceDataObjects = @($Session.BalancesData.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet }) | Sort-Object -Property DateTime
+                $BalanceDataObjects = @($Session.BalancesData.Where{ $_.Pool -eq $BalanceObject.Pool -and $_.Currency -eq $BalanceObject.Currency -and $_.Wallet -eq $BalanceObject.Wallet } | Sort-Object -Property DateTime)
 
                 # Get threshold currency and value
                 $PayoutThreshold = $BalanceObject.PayoutThreshold

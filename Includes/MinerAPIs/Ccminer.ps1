@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\CCminer.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 # [NoRunspaceAffinity()]
@@ -54,7 +54,7 @@ class CcMiner : Miner {
                 $PowerConsumption = $this.GetPowerConsumption()
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption
@@ -62,6 +62,7 @@ class CcMiner : Miner {
             }
         }
         catch { 
+            if ($_.Exception.Message -like "*No connection could be made*") { $_ = $null }
             return $null
         }
     }

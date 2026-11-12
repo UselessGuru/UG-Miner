@@ -5,75 +5,80 @@ function formatMiners(data) {
   // This function can alter the returned data before building the table, formatting it in a way
   // that is easier to display and manipulate in a table
   $.each(data, function(index, item) {
-    // Format miner link
-    if (item.MinerURL) {
-      if (item.Best) {
-        if (item.Status == 4) {
-          item.BaseName = '<a href="' + item.MinerURL + '" target="_blank">' + item.BaseName + '</a>';
-          item.Name = '<a href="' + item.MinerURL + '" target="_blank">' + item.Name + '</a>';
-          item.StatusInfo = '<a href="' + item.MinerURL + '" target="_blank">' + item.StatusInfo + '</a>';
+    try {
+      // Format miner link
+      if (item.MinerURL) {
+        if (item.Best) {
+          if (item.Status == 4) {
+            item.BaseName = '<a href="' + item.MinerURL + '" target="_blank">' + item.BaseName + '</a>';
+            item.Name = '<a href="' + item.MinerURL + '" target="_blank">' + item.Name + '</a>';
+            item.StatusInfo = '<a href="' + item.MinerURL + '" target="_blank">' + item.StatusInfo + '</a>';
+          }
         }
       }
-    }
 
-    // Format the device name
-    item.Devices = formatDeviceNames(item.BaseName_Version_Device);
+      // Format the device name
+      item.Devices = formatDeviceNames(item.BaseName_Version_Device);
 
-    // Format the pool and algorithm data
-    if (item.Workers.length > 0) {
-      item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
-      item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
-      item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
-      item.PrimaryCurrency = item.Workers[0].Pool.Currency;
-      item.PrimaryHashrate = item.Workers[0].Hashrate;
-      item.PrimaryMinerFee = item.Workers[0].Fee;
-      item.PrimaryPool = item.Workers[0].Pool.Name;
-      item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
-      item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-      item.PrimaryPoolUser = item.Workers[0].Pool.User;
-      item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
-      if (item.Workers.length > 1) {
-        item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
-        item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
-        item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
-        item.SecondaryCurrency = item.Workers[1].Pool.Currency;
-        item.SecondaryHashrate = item.Workers[1].Hashrate;
-        item.SecondaryMinerFee = item.Workers[1].Fee;
-        item.SecondaryPool = item.Workers[1].Pool.Name;
-        item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
-        item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
-        item.SecondaryPoolUser = item.Workers[1].Pool.User;
-        item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
+      // Format the pool and algorithm data
+      if (item.Workers.length > 0) {
+        item.PrimaryAlgorithm = item.Workers[0].Pool.Algorithm;
+        item.PrimaryAlgorithmVariant = item.Workers[0].Pool.AlgorithmVariant;
+        item.PrimaryCoinName = item.Workers[0].Pool.CoinName;
+        item.PrimaryCurrency = item.Workers[0].Pool.Currency;
+        item.PrimaryHashrate = item.Workers[0].Hashrate;
+        item.PrimaryMinerFee = item.Workers[0].Fee;
+        item.PrimaryPool = item.Workers[0].Pool.Name;
+        item.PrimaryPoolFee = item.Workers[0].Pool.Fee;
+        item.PrimaryPoolPort = item.Workers[0].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+        item.PrimaryPoolUser = item.Workers[0].Pool.User;
+        item.PrimaryPoolVariant = item.Workers[0].Pool.Variant;
+        if (item.Workers.length > 1) {
+          item.SecondaryAlgorithm = item.Workers[1].Pool.Algorithm;
+          item.SecondaryAlgorithmVariant = item.Workers[1].Pool.AlgorithmVariant;
+          item.SecondaryCoinName = item.Workers[1].Pool.CoinName;
+          item.SecondaryCurrency = item.Workers[1].Pool.Currency;
+          item.SecondaryHashrate = item.Workers[1].Hashrate;
+          item.SecondaryMinerFee = item.Workers[1].Fee;
+          item.SecondaryPool = item.Workers[1].Pool.Name;
+          item.SecondaryPoolFee = item.Workers[1].Pool.Fee;
+          item.SecondaryPoolPort = item.Workers[1].Pool.PoolPorts.filter(x => x != null).slice(-1)[0];
+          item.SecondaryPoolUser = item.Workers[1].Pool.User;
+          item.SecondaryPoolVariant = item.Workers[1].Pool.Variant;
+        }
       }
+
+      // Format margin of error
+      item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
+
+      // Format the live speed(s)
+      item.PrimaryHashrateLive = item.Hashrates_Live[0];
+      item.SecondaryHashrateLive = item.Hashrates_Live[1];
+
+      // Format Total Mining Duration (TimeSpan)
+      if (item.TotalMiningDuration.Ticks <= 0) item.TotalMiningDuration = "n/a"
+      else item.TotalMiningDuration = formatTimeSpan(item.TotalMiningDuration);
+
+      // Format Mining Duration (DateTime)
+      if (item.BeginTime == "0001-01-01T00:00:00") item.MiningDuration = "n/a";
+      else item.MiningDuration = formatTimeSince(item.BeginTime).replaceAll('&nbsp;ago' ,'').replaceAll('just now', 'just started');
+
+      // Format status
+      item.Status = enumminerstatus[item.Status];
+
+      // Format warmup times
+      item.WarmupTimes0 = item.WarmupTimes[0];
+      item.WarmupTimes1 = item.WarmupTimes[1];
+
+      // Format CommandLine, escape \"
+      item.CommandLine = item.CommandLine.replaceAll('\"', '&#34;');
+
+      // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
+      if (item.Reasons.length <= 0) item.Reasons = [" "];
+    } catch (error) {
+      console.error(error);
+      // (Note: the exact output may be browser-dependent)
     }
-
-    // Format margin of error
-    item.Earnings_Accuracy = formatPercent(item.Earnings_Accuracy);
-
-    // Format the live speed(s)
-    item.PrimaryHashrateLive = item.Hashrates_Live[0];
-    item.SecondaryHashrateLive = item.Hashrates_Live[1];
-
-    // Format Total Mining Duration (TimeSpan)
-    if (item.TotalMiningDuration.Ticks <= 0) item.TotalMiningDuration = "n/a"
-    else item.TotalMiningDuration = formatTimeSpan(item.TotalMiningDuration);
-
-    // Format Mining Duration (DateTime)
-    if (item.BeginTime == "0001-01-01T00:00:00") item.MiningDuration = "n/a";
-    else item.MiningDuration = formatTimeSince(item.BeginTime).replaceAll('&nbsp;ago' ,'').replaceAll('just now', 'just started');
-
-    // Format status
-    item.Status = enumminerstatus[item.Status];
-
-    // Format warmup times
-    item.WarmupTimes0 = item.WarmupTimes[0];
-    item.WarmupTimes1 = item.WarmupTimes[1];
-
-    // Format CommandLine, escape \"
-    item.CommandLine = item.CommandLine.replaceAll('\"', '&#34;');
-
-    // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
-    if (item.Reasons.length <= 0) item.Reasons = [" "];
   });
   return data;
 }
@@ -84,9 +89,9 @@ function formatPools(data) {
   $.each(data, function(index, item) {
     if (configrunning.UsemBTC) factor = 1000;
     else factor = 1;
-    item.Price = item.Price * factor;
-    item.Price_Bias = item.Price_Bias * factor;
-    item.StablePrice = item.StablePrice * factor;
+    item.Price *= factor;
+    item.Price_Bias *= factor;
+    item.StablePrice *= factor;
     // Format reasons, select does not work with empty arrays (https://github.com/wenzhixin/bootstrap-table/issues/7557)
     if (item.Reasons.length <= 0) item.Reasons = [" "];
   });

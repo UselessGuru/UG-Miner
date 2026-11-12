@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Balances\Zpool.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
@@ -36,16 +36,17 @@ $Config.PoolsConfig.$Name.Wallets.Keys.ForEach{
 
         $APIallowedFailureCount = $Config.PoolsConfig.$Name.PoolAPIAllowedFailureCount
         do { 
-                            try { 
-                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
-                } catch { 
-                    Remove-Variable APIerror -ErrorAction Ignore; ; Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
-                }
+            try { 
+                Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+            } catch { 
+                Remove-Variable APIerror -ErrorAction Ignore
+                # Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
+            }
             $APIallowedFailureCount --
         } until ($APIdata.StatusCode -in @(200, 403, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
-            Write-Message -Level Error "BalancesTracker '$Name': Query to '$URL' failed ($($APIerror.Message))"
+            # Write-Message -Level Error "BalancesTracker '$Name': Query to '$URL' failed ($($APIerror.Message))"
         }
         elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
             if ($BalanceInfo = $APIdata.Content | ConvertFrom-Json) {

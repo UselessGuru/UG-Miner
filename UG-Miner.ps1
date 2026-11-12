@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 using module .\Includes\Include.psm1
@@ -286,7 +286,7 @@ $Global:VerbosePreference     = "SilentlyContinue"
 
 Set-Location (Split-Path $MyInvocation.MyCommand.Path)
 
-$RecommendedPWSHversion = [Version]"7.6.9"
+$RecommendedPWSHversion = [Version]"7.7.0"
 
 # Close useless empty cmd window that comes up when starting from bat file
 if ((Get-Process -Id $PID).Parent.ProcessName -eq "conhost") { 
@@ -324,7 +324,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.9.3"
+    Version      = [System.Version]"6.9.4"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 
@@ -333,11 +333,11 @@ $host.UI.RawUI.WindowTitle = "$($Session.Branding.ProductLabel) $($Session.Brand
 Write-Message -Level Info "Starting $($Session.Branding.ProductLabel)® v$($Session.Branding.Version)..."
 
 Write-Host "`nChecking PWSH version..." -ForegroundColor Yellow -NoNewline
-if ($PSVersiontable.PSVersion -lt [System.Version]"7.4.0") { 
+if ($PSVersiontable.PSVersion -lt [System.Version]"7.6.0") { 
     Write-Host " ✖" -ForegroundColor Red
-    Write-Message -Level Error "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected. $($Session.Branding.BrandName) requires at least PWSH version 7.4.0."
+    Write-Message -Level Error "Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected. $($Session.Branding.BrandName) requires at least PWSH version 7.6.0."
     Write-Host "The recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases." -ForegroundColor Red
-    (New-Object -ComObject Wscript.Shell).Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Session.Branding.BrandName) requires at least PWSH version 7.4.0.`nThe recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
+    (New-Object -ComObject Wscript.Shell).Popup("Unsupported PWSH version $($PSVersiontable.PSVersion.ToString()) detected.`n`n$($Session.Branding.BrandName) requires at least PWSH version 7.6.0.`nThe recommended version is $($RecommendedPWSHversion) which can be downloaded from https://github.com/PowerShell/powershell/releases.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112) | Out-Null
     exit
 }
 Write-Host " ✔  (running PWSH version $($PSVersionTable.PSVersion)" -ForegroundColor Green -NoNewline
@@ -395,7 +395,7 @@ Write-Message -Level Verbose "Preparing environment and loading data files..."
 }
 
 # Load donation as case insensitive sorted list
-try { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.DonationData = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DonationData.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.DonationData) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\DonationData.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DonationData.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -406,7 +406,7 @@ if (-not $Session.DonationData) {
 Write-Host "Loaded donation database" -NoNewline; Write-Host " ✔  ($($Session.DonationData.Count) $(if ($Session.DonationData.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load donation log
-try { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) } catch { }
+try { $Session.DonationLog = @([System.IO.File]::ReadAllLines("$PWD\Logs\DonationLog.csv") | ConvertFrom-Csv -ErrorAction Ignore) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.DonationLog) { 
     $Session.DonationLog = @()
 }
@@ -415,7 +415,7 @@ else {
 }
 
 # Load algorithm list as case insensitive sorted list
-try { $Session.Algorithms = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.Algorithms = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\Algorithms.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.Algorithms.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\Algorithms.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Algorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -426,7 +426,7 @@ if (-not $Session.Algorithms.Keys) {
 Write-Host "Loaded algorithm database" -NoNewline; Write-Host " ✔  ($($Session.Algorithms.Count) $(if ($Session.Algorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load coin names as case insensitive sorted list
-try { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.CoinNames = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CoinNames.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.CoinNames.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\CoinNames.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CoinNames.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -437,7 +437,7 @@ if (-not $Session.CoinNames.Keys) {
 Write-Host "Loaded coin names database" -NoNewline; Write-Host " ✔  ($($Session.CoinNames.Count) $(if ($Session.CoinNames.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load currency algorithm data as case insensitive sorted list
-try { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.CurrencyAlgorithm = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\CurrencyAlgorithm.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.CurrencyAlgorithm.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\CurrencyAlgorithm.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -448,7 +448,7 @@ if (-not $Session.CurrencyAlgorithm.Keys) {
 Write-Host "Loaded currency database" -NoNewline; Write-Host " ✔  ($($Session.CurrencyAlgorithm.Count) $(if ($Session.CurrencyAlgorithm.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load EquihashCoinPers data as case insensitive sorted list
-try { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.EquihashCoinPers = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\EquihashCoinPers.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.EquihashCoinPers) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\EquihashCoinPers.json' is not a valid JSON file. Please restore it from your original download."
     [Void]$WscriptShell.Popup("File '.\Data\EquihashCoinPers.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -463,7 +463,7 @@ try {
     $Session.Regions = [Ordered]@{ }
     ([System.IO.File]::ReadAllLines("$PWD\Data\Regions.json") | ConvertFrom-Json).PSObject.Properties.ForEach{ $Session.Regions[$_.Name] = @($_.Value) }
 }
-catch { }
+catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.Regions.Keys) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\Regions.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\Regions.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -474,7 +474,7 @@ if (-not $Session.Regions.Keys) {
 Write-Host "Loaded regions database" -NoNewline; Write-Host " ✔  ($($Session.Regions.Count) $(if ($Session.Regions.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load FIAT currencies list as case insensitive sorted list
-try { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.FIATcurrencies = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\FIATcurrencies.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.FIATcurrencies) { 
     Write-Error "Terminating error - cannot continue! File '.\Data\FIATcurrencies.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\FIATcurrencies.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -491,7 +491,7 @@ try {
     $UnprofitableAlgorithms.Keys.ForEach{ $Session.UnprofitableAlgorithms[$_] = $UnprofitableAlgorithms.$_ }
     Remove-Variable UnprofitableAlgorithms
 }
-catch { }
+catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.UnprofitableAlgorithms.Count) { 
     Write-Error "Error loading list of unprofitable algorithms. File '.\Data\UnprofitableAlgorithms.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\UnprofitableAlgorithms.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -502,7 +502,7 @@ if (-not $Session.UnprofitableAlgorithms.Count) {
 Write-Host "Loaded unprofitable algorithms database" -NoNewline; Write-Host " ✔  ($($Session.UnprofitableAlgorithms.Count) $(if ($Session.UnprofitableAlgorithms.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load DAG data, if not available it will get recreated
-try { $Session.DAGdata = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -AsHashtable -ErrorAction Ignore)) } catch { }
+try { $Session.DAGdata = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\DAGdata.json") | ConvertFrom-Json -AsHashtable -ErrorAction Ignore)) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.DAGdata.Currency) { 
     Write-Error "Error loading DAG database. File '.\Data\DAGdata.json' is not a valid $($Session.Branding.ProductLabel) JSON data file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\DAGdata.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -513,7 +513,7 @@ if (-not $Session.DAGdata.Currency) {
 Write-Host "Loaded DAG database" -NoNewline; Write-Host " ✔  ($($Session.DAGdata.Currency.PSObject.Properties.Name.Count) $(if ($Session.DAGdata.Currency.PSObject.Properties.Name.Count -eq 1) { "entry" } else { "entries" }))" -ForegroundColor Green
 
 # Load PoolsLastUsed data as case insensitive sorted list
-try { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.PoolsLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\PoolsLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.PoolsLastUsed.psBase.Keys) { 
     $Session.PoolsLastUsed =  [System.Collections.SortedList]@{ }
 }
@@ -522,7 +522,7 @@ else {
 }
 
 # Load AlgorithmsLastFound data as case insensitive sorted list
-try { $Session.AlgorithmsLastFound = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastFound.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.AlgorithmsLastFound = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastFound.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.AlgorithmsLastFound.psBase.Keys) { 
     $Session.AlgorithmsLastFound = [System.Collections.SortedList]@{ }
 }
@@ -531,7 +531,7 @@ else {
 }
 
 # Load AlgorithmsLastMined data as case insensitive sorted list
-try { $Session.AlgorithmsLastMined = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastMined.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.AlgorithmsLastMined = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\AlgorithmsLastMined.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.AlgorithmsLastMined.psBase.Keys) { 
     $Session.AlgorithmsLastMined = [System.Collections.SortedList]@{ }
 }
@@ -540,7 +540,7 @@ else {
 }
 
 # Load MinersLastUsed data as case insensitive sorted list
-try { $Session.MinersLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { }
+try { $Session.MinersLastUsed = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines("$PWD\Data\MinersLastUsed.json") | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase) } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.MinersLastUsed.psBase.Keys) { 
     $Session.MinersLastUsed = [System.Collections.SortedList]@{ }
 }
@@ -553,7 +553,7 @@ try {
     $Session.EarningsChartData = [System.IO.File]::ReadAllLines("$PWD\Cache\EarningsChartData.json") | ConvertFrom-Json
     $Session.BalancesUpdatedTimestamp = (Get-ItemProperty -LiteralPath "$PWD\Cache\EarningsChartData.json" -Name LastWriteTime).lastwritetime.ToString("G")
 }
-catch { }
+catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.EarningsChartData.Earnings) { 
     $Session.EarningsChartData = @{ }
     $Session.BalancesUpdatedTimestamp = (Get-Date -Format "G")
@@ -563,7 +563,7 @@ else {
 }
 
 # Load Balances data to make it available early in GUI
-try { $Session.Balances = [System.IO.File]::ReadAllLines("$PWD\Cache\Balances.json") | ConvertFrom-Json -AsHashtable } catch { }
+try { $Session.Balances = [System.IO.File]::ReadAllLines("$PWD\Cache\Balances.json") | ConvertFrom-Json -AsHashtable } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.Balances.Keys) { 
     $Session.Balances = [Ordered]@{ } # as case insensitive hash table
 }
@@ -572,7 +572,7 @@ else {
 }
 
 # Load AMD GPU architecture table
-try { $Session.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
+try { $Session.GPUArchitectureDbAMD = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureAMD.json") | ConvertFrom-Json -ErrorAction Ignore } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.GPUArchitectureDbAMD) { 
     Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureAMD.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)
@@ -586,7 +586,7 @@ else {
 }
 
 # Load NVidia GPU architecture table
-try { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore } catch { }
+try { $Session.GPUArchitectureDbNvidia = [System.IO.File]::ReadAllLines("$PWD\Data\GPUArchitectureNvidia.json") | ConvertFrom-Json -ErrorAction Ignore } catch { if ($Error) { $Error.Remove($Error[0]) } }
 if (-not $Session.GPUArchitectureDbNvidia) { 
     Write-Message -Level Error "Terminating error - cannot continue! File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file. Please restore it from your original download."
     [Void](New-Object -ComObject Wscript.Shell).Popup("File '.\Data\GPUArchitectureNvidia.json' is not a valid JSON file.`nPlease restore it from your original download.`n`n$($Session.Branding.ProductLabel) will shut down.", 0, "Terminating error - cannot continue!", 4112)

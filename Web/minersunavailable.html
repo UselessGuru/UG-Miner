@@ -181,13 +181,21 @@
               document.getElementById("btn-remove-watchdog").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
+            $("#miners").on("post-header.bs.table", function () {
+                if (configrunning.CalculatePowerCost) {
+                document.getElementById("btn-re-measure").style.visibility = "visible";
+              } else { 
+                document.getElementById("btn-re-measure").style.visibility = "hidden";
+              };
+            });
+
             $("#btn-re-benchmark").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type" : "Hashrate"
                 };
                 $(".modal-body").load($url, $payload, function() {
@@ -202,11 +210,11 @@
 
             $("#btn-re-measure").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type" : "PowerConsumption"
                 };
                 $(".modal-body").load($url, $payload, function() {
@@ -221,11 +229,11 @@
 
             $("#btn-failed").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/set";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type": "Hashrate",
                   "Value": 0
                 };
@@ -241,11 +249,11 @@
 
             $("#btn-disable").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/disable";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text("Disable miner");
@@ -259,11 +267,11 @@
 
             $("#btn-enable").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/enable";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text("Enable miner");
@@ -277,11 +285,11 @@
 
             $("#btn-remove-watchdog").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/watchdogtimers/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Name: $element.Name})))
+                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text($("#btn-remove-watchdog").text());

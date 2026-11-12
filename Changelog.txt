@@ -1,3 +1,24 @@
+Changelog UG-Miner 6.9.4 2026/11/12
+===================================
+
+Fixes:
+- Core: Rework pool handling, do no longer keep pools and depreciate over 24hr.
+- Core: No more 'No miners found' message after stopping and restarting mining processes (regreession from 6.9.1)
+- Core: Make Cionmarketcap the primary currency exchange rate provider (may eliminate queries to additional API providers)
+- Pool Kryptex: Error in pool file 'Pools\Kryptex.ps1'
+
+Enhancements:
+- Web GUI / Miners: Hide 'Re-measure Power Usage' button when $CalculatePowerCost -eq $false
+
+Miner changes:
+- BzMiner-v100.80 (update)
+- BzMiner-v24.0.2 (removed, API data is corrupt)
+- OneZeroMiner-v1.8.5 (update)
+- SRBMinerMulti-v3.8.7 (update)
+- Wildrig-v0.52.1 (update)
+- Wildrig-v1.0.0w (update)
+
+
 Changelog UG-Miner 6.9.3 2026/11/01
 ===================================
 

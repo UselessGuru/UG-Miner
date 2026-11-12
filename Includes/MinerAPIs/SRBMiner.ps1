@@ -18,19 +18,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\SRBminer.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [NoRunspaceAffinity()]
 class SRBMiner : Miner { 
     [Object]GetMinerData () { 
-        $Timeout = 5 # seconds
+        $Timeout = 2 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = "http://127.0.0.1:$($this.Port)"
 
         try { 
-            $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout 2>$null 3>$null 4>$null 5>$null 6>$null
+            $Data = Invoke-RestMethod -Uri $Request -Method GET -ConnectionTimeoutSeconds $Timeout -OperationTimeoutSeconds $Timeout -DisableKeepAlive 2>$null 3>$null 4>$null 5>$null 6>$null
+            if ($Error) { $Error.Remove($Error[0]) }
             if (-not $Data) { return $null }
 
             $Type = if ($Data.total_cpu_workers -gt 0) { "cpu" } else { "gpu" }
@@ -68,7 +69,7 @@ class SRBMiner : Miner {
                 }
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption

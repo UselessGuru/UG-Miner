@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Kryptex.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 param(
@@ -33,6 +33,8 @@ $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 
 $PoolConfig = $Session.Config.PoolsConfig.$Name
 $BrainDataFile = "$PWD\Data\BrainData_$Name.json"
+
+if (-not $Session.Rates.USD) { return }
 
 Write-Message -Level Debug "Pool '$PoolVariant': Start"
 

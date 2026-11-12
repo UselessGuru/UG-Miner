@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\EthMiner.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [NoRunspaceAffinity()]
@@ -32,6 +32,7 @@ class EthMiner : Miner {
 
         try { 
             $Response = Invoke-TcpRequest -Server 127.0.0.1 -Port $this.Port -Request $Request -Timeout $Timeout
+            if ($Error) { $Error.Remove($Error[0]) }
             $Data = $Response | ConvertFrom-Json -ErrorAction Stop
             if (-not $Data.result -or ($null -eq ($Data.result[2] -split ";")[0])) { return $null }
 
@@ -66,7 +67,7 @@ class EthMiner : Miner {
                 $PowerConsumption = $this.GetPowerConsumption()
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption

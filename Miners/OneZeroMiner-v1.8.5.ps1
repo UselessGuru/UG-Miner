@@ -17,16 +17,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
-# Efficiency improvement for 30xx, 40xx, and 50xx series (~2%)
-# Minor performance improvement of both kernel 1 and kernel 2 for Turing (20xx series and CMP 50hx)
+# Added experimental support for locking memory clock of CMP 30/40/50/70/90 HX at 5000, 810, and 405 Mhz on linux
+# This new feature brings 20 to 50% more efficiency to cmp cards on all core algos.
+# It is experimental and has only been tested on hiveos with driver version 610.43.03
+# use the miner's built in oc option --mclk for setting the memory clock.
+
+# Added experimental support for locking memory to 405 Mhz while keeping the core clock in the normal range for 20xx, 30xx, 40xx, and 50xx series. Only available on linux. 
+# The power drop from 810 to 405 is a minor one. It doesn't seem to help 50xx series much but should have a noticeable efficiency improvement on the other generations for all core algos.
+# It has been tested on driver v595 and v610.  580 and older versions are not supported in this release.
+# use the miner's built in oc option --mclk for setting the memory clock.
+
+# Pearlhash:
+# Performance improvement for V100/CMP100-210
+# Minor performance improvement on 20xx, 30xx and 40xx cards.
+# Added an optional telemetry on pearlhash that sends the active gpu names to the pool on the authorize request. use --disable-pearlhash-telemetry if you wish to opt out.
+
+# Added core offset, memory offset, gpu voltage, gpu memory temperature to the console stats.
+# Added --stats-interval(default 30s) to control the frequency of showing console stats. 
+# Added native support for locking memory clock of 20xx series cards on linux and Windows.
+# Minor bug fixes
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") })) { return }
 
-$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.4/onezerominer-win64-1.8.4.zip"
+$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.5/onezerominer-win64-1.8.5.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"

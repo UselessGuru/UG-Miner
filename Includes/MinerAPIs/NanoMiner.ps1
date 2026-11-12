@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\NanoMiner.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [NoRunspaceAffinity()]
@@ -47,7 +47,8 @@ class NanoMiner : Miner {
         $Request = "http://127.0.0.1:$($this.Port)/stats"
 
         try { 
-            $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout 2>$null 3>$null 4>$null 5>$null 6>$null
+            $Data = Invoke-RestMethod -Uri $Request -Method GET -ConnectionTimeoutSeconds $Timeout -OperationTimeoutSeconds $Timeout -DisableKeepAlive 2>$null 3>$null 4>$null 5>$null 6>$null
+            if ($Error) { $Error.Remove($Error[0]) }
             if (-not $Data) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
@@ -81,7 +82,7 @@ class NanoMiner : Miner {
                 }
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption

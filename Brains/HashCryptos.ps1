@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 using module ..\Includes\Include.psm1
@@ -59,7 +59,8 @@ while ($Config.PoolsConfig.$Name) {
                 try { 
                     Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec $Config.PoolsConfig.$Name.PoolAPItimeout -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
                 } catch { 
-                    Remove-Variable APIerror -ErrorAction Ignore; ; Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
+                    Remove-Variable APIerror -ErrorAction Ignore
+                    # Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($_.Exception.Message))"
                 }
                 $APIallowedFailureCount --
                 if ($APIallowedFailureCount -gt 0 -and $APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
@@ -72,10 +73,10 @@ while ($Config.PoolsConfig.$Name) {
             } until (($APIdata.StatusCode -in @(200, 404) -and $APIdata.Content -notmatch "Only \d request every \d+ seconds allowed") -or $APIallowedFailureCount -eq 0)
 
             if ($APIerror) { 
-                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
+                # Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
             }
             elseif ($APIdata.Content -match "Only \d request every \d+ seconds allowed") { 
-                Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
+                # Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIdata.Content))"
             }
             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
 
@@ -170,11 +171,13 @@ while ($Config.PoolsConfig.$Name) {
                 }
             }
 
-            $Session.BrainData.$Name = $BrainData
-            $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
+            if ($BrainData) { 
+                $Session.BrainData.$Name = $BrainData
+                $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
 
-            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                ($AlgoData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
+                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                    ($BrainData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
+                }
             }
 
             # Limit to only sample size + 10 minutes history
@@ -186,7 +189,7 @@ while ($Config.PoolsConfig.$Name) {
             $_.Exception | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
             $_.InvocationInfo | Format-List -Force >> "Logs\Brain_$($Name)_Error_$(Get-Date -Format "yyyy-MM-dd").txt"
         }
-        Remove-Variable AlgoData -ErrorAction Ignore
+        Remove-Variable AlgoData, BrainData -ErrorAction Ignore
 
         $Duration = ([DateTime]::Now - $StartTime).TotalSeconds
         $Durations += ($Duration, $Session.Interval | Measure-Object -Minimum).Minimum

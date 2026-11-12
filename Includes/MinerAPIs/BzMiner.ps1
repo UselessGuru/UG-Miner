@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\BzMiner.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [NoRunspaceAffinity()]
@@ -27,15 +27,15 @@ class BzMiner : Miner {
     [Object]GetMinerData () { 
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
-        $Request = "http://127.0.0.1:$($this.Port)/status"
+        $Request = "http://127.0.0.1:$($this.Port)/api/snapshot"
 
         try { 
-            $Data = Invoke-RestMethod -Uri $Request -TimeoutSec $Timeout 2>$null 3>$null 4>$null 5>$null 6>$null
+            $Data = Invoke-RestMethod -Uri $Request -Method GET -ConnectionTimeoutSeconds $Timeout -OperationTimeoutSeconds $Timeout -DisableKeepAlive 2>$null 3>$null 4>$null 5>$null 6>$null
+            if ($Error) { $Error.Remove($Error[0]) }
+
             if (-not $Data) { return $null }
 
-            $Devices = $Data.devices.Where{ $_.message[0] }
-
-            if ($Devices.Hashrate.Count -ne $this.Algorithms.Count) { return $null }
+            # if ($Data.Pools.Count -ne $this.Algorithms.Count) { return $null }
 
             $Hashrate = [PSCustomObject]@{ }
             $HashrateName = [String]$this.Algorithms[0]
@@ -43,23 +43,27 @@ class BzMiner : Miner {
 
             $Shares = [PSCustomObject]@{ }
 
-            $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate[0] } | Measure-Object -Sum).Sum)
-            if (-not $HashrateValue -and $Devices.hashrate -contains $null) { return $null }
+            $Devices = $Data.Devices.Where{ $_.pool -eq 0 }
+
+            $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate } | Measure-Object -Sum).Sum)
+            if (-not $HashrateValue) { return $null }
             $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-            $SharesAccepted = [Int64](($Devices.ForEach{ $_.valid_solutions[0] } | Measure-Object -Sum).Sum)
-            $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected_solutions[0] } | Measure-Object -Sum).Sum)
-            $SharesInvalid = [Int64](($Devices.ForEach{ $_.stale_solutions[0] } | Measure-Object -Sum).Sum)
+            $SharesAccepted = [Int64](($Devices.ForEach{ $_.accepted } | Measure-Object -Sum).Sum)
+            $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected } | Measure-Object -Sum).Sum)
+            $SharesInvalid  = [Int64](($Devices.ForEach{ $_.stale }    | Measure-Object -Sum).Sum)
             $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
 
-            if ($HashrateName = [String]($this.Algorithms -ne $HashrateName)) { 
-                $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate[1] } | Measure-Object -Sum).Sum)
-                if (-not $HashrateValue -and $Devices.hashrate -contains $null) { return $null }
+            if ($HashrateName = [String]$this.Algorithms[1]) { 
+
+                $Devices = $Data.Devices.Where{ $_.pool -eq 1 }
+
+                $HashrateValue = [Double](($Devices.ForEach{ $_.hashrate } | Measure-Object -Sum).Sum)
                 $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 
-                $SharesAccepted = [Int64](($Devices.ForEach{ $_.valid_solutions[1] } | Measure-Object -Sum).Sum)
-                $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected_solutions[1] } | Measure-Object -Sum).Sum)
-                $SharesInvalid = [Int64](($Devices.ForEach{ $_.stale_solutions[1] } | Measure-Object -Sum).Sum)
+                $SharesAccepted = [Int64](($Devices.ForEach{ $_.accepted } | Measure-Object -Sum).Sum)
+                $SharesRejected = [Int64](($Devices.ForEach{ $_.rejected } | Measure-Object -Sum).Sum)
+                $SharesInvalid  = [Int64](($Devices.ForEach{ $_.stale }    | Measure-Object -Sum).Sum)
                 $Shares | Add-Member @{ $HashrateName = @($SharesAccepted, $SharesRejected, $SharesInvalid, ($SharesAccepted + $SharesRejected + $SharesInvalid)) }
             }
 
@@ -72,7 +76,7 @@ class BzMiner : Miner {
                 }
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption

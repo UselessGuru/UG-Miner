@@ -17,17 +17,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
-# improved pearlhash efficiency for NVIDIA Ampere, Ada and Blackwell gpu's
-# improved quantus for NVIDIA Ampere, Ada and Blackwell gpu's
-# fixed support for Intel Arc B Pro gpu's
+# improved pearlhash power efficiency up to 8% for NVIDIA gpu's
+# improved pearlhash for AMD gpu's
+# implemented --gpu-xbar-offset, --gpu-msvdd and --gpu-msvdd-offset for NVIDIA GPUs for further power-efficiency tuning
+# implemented --gpu-vddc to set a target core voltage
+# fixed an issue where --gpu-vddc-offset wasn't applied
+# implemented monitoring of oc parameters, now miner will restore them in case of outside change/reset
+# implemented basic oc for AMD gpu's(--gpu-core-clock, --gpu-vddc, --gpu-vddc-offset and --gpu-powerlimit)
+# implemented interactive oc tuning via hotkeys, check documentation
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN?$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "7.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0r/wildrig-ng-windows-1.0.0r.zip"
+$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0w/wildrig-ng-windows-1.0.0w.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig-ng.exe"
 $DeviceEnumerator = "Type_Slot"

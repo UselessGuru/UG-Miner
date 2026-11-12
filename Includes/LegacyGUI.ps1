@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -339,7 +339,7 @@ function Update-TabControl {
                         # @{ Name = "Total active (hhh:mm:ss)"; Expression = { "{0}:{1:mm}:{1:ss}" -f [Math]::floor($_.TotalMiningDuration.TotalDays * 24), $_.TotalMiningDuration } }
                     ) | Out-DataTable
                     $LegacyGUIelements.ActiveMinersDGV.Sort($LegacyGUIelements.ActiveMinersDGV.Columns[2], [System.ComponentModel.ListSortDirection]::Ascending)
-                    $LegacyGUIelements.ActiveMinersLabel.Text = "Active miners updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.ActiveMinersDGV.Rows.count) miner$(if ($LegacyGUIelements.ActiveMinersDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.ActiveMinersLabel.Text = "Active miners$(if ($Session.MinersUpdatedTimestamp) { " updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.ActiveMinersDGV.Rows.count) miner$(if ($LegacyGUIelements.ActiveMinersDGV.Rows.count -ne 1) { "s" }))" })"
 
                     $LegacyGUIelements.ActiveMinersDGV.Columns[0].Visible = $false
                     $LegacyGUIelements.ActiveMinersDGV.Columns[1].Visible = $false
@@ -452,12 +452,12 @@ function Update-TabControl {
 
                         Remove-Variable ChartArea, ChartTitle, Color, DaySum, I, Pool
                     }
-                    catch { }
+                    catch { if ($Error) { $Error.Remove($Error[0]) } }
                 }
 
                 $DataSource = $Session.Balances.Values
                 if ($Session.Balances.Values.LastUpdated) { 
-                    $LegacyGUIelements.BalancesLabel.Text = "Balances updated $(($Session.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())"
+                    $LegacyGUIelements.BalancesLabel.Text = "Balances$(if ($Session.Balances.Values.LastUpdated) { " updated $(($Session.Balances.Values.LastUpdated | Sort-Object -Bottom 1).ToLocalTime().ToString())" })"
 
                     $LegacyGUIelements.BalancesDGV.BeginInit()
                     $LegacyGUIelements.BalancesDGV.DataSource = $DataSource | Select-Object @(
@@ -593,7 +593,7 @@ function Update-TabControl {
                         @{ Name = "Hashrate"; Expression = { if ($_.Benchmark) { if ($_.Status -eq "Running") { "Benchmarking..." } else { "Benchmark pending" } } else { $_.Workers.ForEach{ $_.Hashrate | ConvertTo-Hash } -join " & " } } }
                         if ($LegacyGUIelements.RadioButtonMinersUnavailable.checked -or $LegacyGUIelements.RadioButtonMiners.checked) { @{ Name = "Reason(s)"; Expression = { $_.Reasons -join ", " } } }
                     ) | Out-DataTable
-                    $LegacyGUIelements.MinersLabel.Text = "Miner information updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(if ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.MinersLabel.Text = "Miner information$(if ($Session.MinersUpdatedTimestamp) { " updated $($Session.MinersUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.MinersDGV.Rows.count) miner$(if ($LegacyGUIelements.MinersDGV.Rows.count -ne 1) { "s" }))"})"
                     if ($LegacyGUIelements.MinersDGV.Columns -and -not $LegacyGUIelements.MinersDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.MinersDGV.Columns[0].Visible = $false
                         $LegacyGUIelements.MinersDGV.Columns[1].Visible = $false
@@ -686,7 +686,7 @@ function Update-TabControl {
 
                     $LegacyGUIelements.PoolsDGV.Sort($LegacyGUIelements.PoolsDGV.Columns[0], [System.ComponentModel.ListSortDirection]::Ascending)
                     $LegacyGUIelements.PoolsDGV.ClearSelection()
-                    $LegacyGUIelements.PoolsLabel.Text = "Pool information updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))"
+                    $LegacyGUIelements.PoolsLabel.Text = "Pool information$(if ($Session.PoolsUpdatedTimestamp) { " updated $($Session.PoolsUpdatedTimestamp.ToLocalTime().ToString("G")) ($($LegacyGUIelements.PoolsDGV.Rows.Count) pool$(if ($LegacyGUIelements.PoolsDGV.Rows.count -ne 1) { "s" }))" })"
 
                     if ($LegacyGUIelements.PoolsDGV.Columns -and -not $LegacyGUIelements.PoolsDGV.ColumnWidthChanged) { 
                         $LegacyGUIelements.PoolsDGV.Columns[0].Visible = $false
@@ -854,6 +854,8 @@ function Update-TabControl {
 function Update-GUIstatus { 
 
     $LegacyGUIform.Text = $host.UI.RawUI.WindowTitle
+
+    if (-not $LegacyGUIform.Visible) { return }
 
     switch ($Session.NewMiningStatus) { 
         "Idle" { 

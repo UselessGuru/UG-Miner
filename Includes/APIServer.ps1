@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 using module .\Include.psm1
 
-$APIversion = "6.1.12"
+$APIversion = "6.1.14"
 
 (Get-Process -Id $PID).PriorityClass = "Normal"
 
@@ -585,31 +585,28 @@ while ($Session.APIversion -and $Server.IsListening) {
         "/functions/watchdogtimers/remove" { 
             if ($Parameters.Miners -or $Parameters.Pools) { 
                 $Data = @()
-                foreach ($Miner in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Name)) { 
-                    if ($Session.WatchdogTimers.Where{ $_.MinerName -eq $Miner.Name }) { 
-                        # Update miner
-                        $Data += $Miner.Name
-                        $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
-                        if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
+                foreach ($Miner in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Miners | Select-Object) @($Parameters.Miners | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Info)) { 
+                    # Update miner
+                    $Data += $Miner.Name
+                    $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
+                    if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
 
-                        # Remove Watchdog timers
-                        $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -ne $Miner.Name }
-                    }
+                    # Remove Watchdog timers
+                    $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerInfo -ne $Miner.Info }
                 }
-                Remove-Variable Miner
+                Remove-Variable Miner -ErrorAction Ignore
 
                 foreach ($Pool in (Compare-Object -PassThru -IncludeEqual -ExcludeDifferent @($Session.Pools | Select-Object) @($Parameters.Pools | ConvertFrom-Json -ErrorAction Ignore | Select-Object) -Property Key)) { 
                     # Update pool
-                    if ($Session.Pools.Where{ $_.Key -eq $Pool.Key }) { 
-                        $Data += "$($Pool.Key) [$($Pool.Region)]"
-                        $Pool.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
-                        if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
+                    $Data += "$($Pool.Key) [$($Pool.Region)]"
+                    $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
+                    if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
 
-                        # Remove Watchdog timers
-                        $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.Key -ne $Pool.Key }
-                    }
+                    # Remove Watchdog timers
+                    $Session.WatchdogTimers = $Session.WatchdogTimers.Where{ $_.PoolKey -ne $Pool.Key }
                 }
-                Remove-Variable Pool
+                Remove-Variable Pool -ErrorAction Ignore
+
                 if ($Data.Count) { 
                     $Message = "$($Data.Count) watchdog $(if ($Data.Count -eq 1) { "timer" } else { "timers" }) removed."
                     Write-Message -Level Verbose "Web GUI: $Message"
@@ -626,13 +623,13 @@ while ($Session.APIversion -and $Server.IsListening) {
                     $Miner.Reasons.Where{ $_ -like "Miner suspended by watchdog *" }.ForEach{ [Void]$Miner.Reasons.Remove($_) }
                     if (-not $Miner.Reasons.Count) { $Miner.Available = $true }
                 }
-                Remove-Variable Miner
+                Remove-Variable Miner -ErrorAction Ignore
 
                 foreach ($Pool in $Session.Pools.ForEach) { 
                     $Pool.Reasons.Where{ $_ -like "Pool suspended by watchdog *" }.ForEach{ [Void]$Pool.Reasons.Remove($_) }
                     if (-not $Pool.Reasons.Count) { $Pool.Available = $true }
                 }
-                Remove-Variable Pool
+                Remove-Variable Pool -ErrorAction Ignore
 
                 Write-Message -Level Verbose "Web GUI: All watchdog timers removed."
                 $Data = "All watchdog timers removed.`nWatchdog timers will be recreated in the next cycle."

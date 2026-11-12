@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -267,7 +267,7 @@ class Pool : IDisposable {
     [String]$Currency
     [Nullable[Double]]$DAGsizeGiB = $null
     [Boolean]$Disabled = $false
-    [Double]$EarningsAdjustmentFactor = 1
+    [Double]$EarningsAdjustmentFactor
     [Nullable[UInt16]]$Epoch = $null # DAG epoch
     [Double]$Fee
     [String]$Host
@@ -286,13 +286,13 @@ class Pool : IDisposable {
     [System.Collections.Generic.SortedSet[String]]$Reasons # Why is the pool not available?
     [String]$Region
     [Boolean]$SendHashrate # If true miner will send hashrate to pool
-    [String]$SideIndicator = ""
+    [String]$SideIndicator
     [Boolean]$SSLselfSignedCertificate
     [Double]$StablePrice
     [DateTime]$Updated
     [String]$User
     [String]$Variant # none, 24h or plus
-    [String]$WorkerName = ""
+    [String]$WorkerName
     [Nullable[UInt]]$Workers
 
     Dispose() { 
@@ -382,7 +382,7 @@ class Miner : IDisposable {
     [Boolean]$ReadPowerConsumption = $true
     [System.Collections.Generic.SortedSet[String]]$Reasons = @() # Why is the miner not available?
     [Boolean]$Restart = $false # if true miner will restart at end of cycle
-    [String]$SideIndicator = ""
+    [String]$SideIndicator
     [MinerStatus]$Status = [MinerStatus]::Idle
     [String]$StatusInfo = ""
     [String]$SubStatus = [MinerStatus]::Idle
@@ -396,7 +396,8 @@ class Miner : IDisposable {
     [Worker[]]$Workers = @() # derived from pools
 
     hidden [System.Collections.Generic.List[PSCustomObject]]$Data = @() # To store data samples (speed & power consumtion)
-    hidden [System.Management.Automation.Job]$DataReaderJob = $null
+    [System.Management.Automation.Job]$DataReaderJob = $null
+    hidden [System.Diagnostics.Process]$Process = $null
     hidden [System.Management.Automation.Job]$ProcessJob = $null
     hidden [DateTime]$StatEnd # UniversalTime
     hidden [DateTime]$StatStart # UniversalTime
@@ -491,10 +492,7 @@ class Miner : IDisposable {
     hidden [Void]StartMining() { 
         if ($this.Arguments -and (Test-Json $this.Arguments -ErrorAction Ignore)) { $this.CreateConfigFiles() }
 
-        if ($this.Benchmark -or $this.MeasurePowerConsumption) { 
-            $this.Data = [System.Collections.Generic.List[PSCustomObject]]@()
-            $this.IsBenchmarkingOrMeasuring = $true
-        }
+        if ($this.IsBenchmarkingOrMeasuring) { $this.Data = [System.Collections.Generic.List[PSCustomObject]]@() }
 
         $this.ContinousCycle = 0
         $this.DataSampleTimestamp = [DateTime]::MinValue
@@ -559,9 +557,9 @@ class Miner : IDisposable {
                         $this.ConhostProcessId    = $JobResult.ConhostProcessId
                         $this.DataSampleTimestamp = [DateTime]::MinValue
                         $this.MinerProcessId      = $JobResult.MinerProcessId
+                        $this.Process             = [System.Diagnostics.Process]::GetProcessById($JobResult.MinerProcessId)
                         $this.Status              = [MinerStatus]::Running
                         $this.StatStart           = $this.BeginTime = [DateTime]::Now.ToUniversalTime()
-                        # $this.Process             = try { [System.Diagnostics.Process]::GetProcessById($this.ProcessId) } catch { }
 
                         $this.StartDataReader()
                         break
@@ -584,7 +582,7 @@ class Miner : IDisposable {
 
         if ($this.ProcessJob) { 
             if ($this.ProcessJob.State -eq "Running") { $this.ProcessJob | Stop-Job -ErrorAction Ignore }
-            try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } catch { }
+            try { $this.Active += $this.ProcessJob.PSEndTime - $this.ProcessJob.PSBeginTime } catch { if ($Error) { $Error.Remove($Error[0]) } }
             # Jobs are getting removed in core loop (removing here immediately after stopping process may take several seconds)
             $this.ProcessJob.Dispose()
             $this.ProcessJob = $null
@@ -592,19 +590,23 @@ class Miner : IDisposable {
 
         $this.EndTime = $this.StatEnd = [DateTime]::Now.ToUniversalTime()
 
-        # if ($this.MinerProcess.Id) { 
-        #     $Local:MinerProcessId = $this.MinerProcess.Id
-        # }
-        # else { 
-        #     $Local:MinerProcessId = ((Get-CimInstance Win32_Process).Where{ $_.ExecutablePath -and $_.CommandLine -eq "$PWD\$($this.CommandLineLaunched)" })[0].ProcessId
-        # }
         if ($this.MinerProcessId) { 
             # Some miners, e.g. HellMiner spawn child process(es) that may need separate killing
-            (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($this.MinerProcessId)").ForEach{ [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore) }
+            (Get-CimInstance Win32_Process -Filter "ParentProcessId = $($this.MinerProcessId)").ForEach{ 
+                if ($_.Name -ne "pwsh.exe") { 
+                    # Write-Message -Level Info "Stopping miner subprocess Id $($_.ProcessId): $($_.Name) [$($_.CommandLine)]..."
+                    [Void](Stop-Process -Id $_.ProcessId -Force -ErrorAction Ignore)
+                }
+            }
+            # Write-Message -Level Info "Stopping miner process Id $($this.MinerProcessId): $($this.Name) [$($this.CommandLine)]..."
             [Void](Stop-Process -Id $this.MinerProcessId -Force -ErrorAction Ignore)
-            # $this.Process = $null
         }
-        if ($this.ConhostProcess.Id) { [Void](Stop-Process -Id $this.ConHostProcessId -Force -ErrorAction Ignore) }
+        if ($this.ConhostProcessId) { 
+            if ($ConHostProcess = Get-Process -Id $this.ConhostProcessId -ErrorAction Ignore) { 
+                # Write-Message -Level Info "Stopping conhost process Id $($this.ConHostProcessId): $($ConHostProcess.Name) [$($ConHostProcess.CommandLine)]..."
+                [Void](Stop-Process -Id $this.ConHostProcessId -Force -ErrorAction Ignore)
+            }
+        }
 
         $this.StatusInfo = if ($this.Status -eq [MinerStatus]::Failed) { $this.StatusInfo.Replace("'$($this.Name)' ", "") -replace ".+stopped. " -replace ".+sample.*\) " } else { "" }
 
@@ -656,7 +658,6 @@ class Miner : IDisposable {
             $this.SubStatus = $this.Status
         }
         $this.Data = [System.Collections.Generic.HashSet[PSCustomObject]]::new()
-        $this.IsBenchmarkingOrMeasuring = $false
     }
 
     [MinerStatus]GetStatus() { 
@@ -667,7 +668,9 @@ class Miner : IDisposable {
                     [Void][System.Diagnostics.Process]::GetProcessById($this.MinerProcessId)
                     return [MinerStatus]::Running
                 }
-                catch { }
+                catch { 
+                    if ($Error) { $Error.Remove($Error[0]) }
+                }
             }
             return [MinerStatus]::Failed
         }
@@ -762,6 +765,7 @@ class Miner : IDisposable {
 
     [Void]Refresh([Double]$PowerCostBTCperW, [Hashtable]$Config) { 
         $this.Available = $true
+        $this.Benchmark = $false
         $this.Best = $false
         $this.MinDataSample = $Config.MinDataSample
 
@@ -817,8 +821,6 @@ class Miner : IDisposable {
                 $this.Earnings_Accuracy += $this.Workers[1].Earnings_Accuracy * $this.Workers[1].Earnings
             }
             $this.Earnings_Accuracy /= $this.Earnings
-
-            $this.IsBenchmarkingOrMeasuring = $false
         }
 
         if ($Stat = Get-Stat -Name ($this.Name + "_PowerConsumption")) { 
@@ -836,11 +838,10 @@ class Miner : IDisposable {
             $this.Profit_Bias             = [Double]::NaN
         }
 
-        $this.Disabled = [Array]::IndexOf($this.Workers.Disabled, $true) -ne -1
-
-        $this.TotalMiningDuration = $this.Workers[0].TotalMiningDuration
-        $this.LastUsed            = $this.Workers[0].Updated
-        $this.Updated             = $this.Workers[0].Pool.Updated
+        $this.Disabled                  = [Array]::IndexOf($this.Workers.Disabled, $true) -ne -1
+        $this.TotalMiningDuration       = $this.Workers[0].TotalMiningDuration
+        $this.LastUsed                  = $this.Workers[0].Updated
+        $this.Updated                   = $this.Workers[0].Pool.Updated
 
         if ($this.Workers[1]) { 
             if ($this.Workers[1].TotalMiningDuration -lt $this.TotalMiningDuration) { $this.TotalMiningDuration = $this.Workers[1].TotalMiningDuration }
@@ -1047,7 +1048,7 @@ function Start-CoreCycle {
                 }
             }
         }
-        catch { }
+        catch { if ($Error) { $Error.Remove($Error[0]) } }
         Remove-Variable StatFiles -ErrorAction Ignore
 
         Clear-Miners
@@ -1175,10 +1176,10 @@ function Start-Brain {
                 $BrainsStarted += $_
             }
         }
-        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStarted.Count -gt 1) { "es" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
+        if ($BrainsStarted.Count -gt 0) { Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStarted.Count -ne 1) { "es" }) for $($BrainsStarted -join ", " -replace ",([^,]*)$", " &`$1") started." }
     }
     else { 
-        Write-Message -Level Error "Failed to start Pool brain backgound process$(if ($BrainsStarted.Count -gt 1) { "es" }). Directory '.\Brains' is missing."
+        Write-Message -Level Error "Failed to start Pool brain backgound process$(if ($BrainsStarted.Count -ne 1) { "es" }). Directory '.\Brains' is missing."
     }
 }
 
@@ -1211,7 +1212,7 @@ function Stop-Brain {
             $BrainsStopped += $_
         }
         if ($BrainsStopped.Count -gt 0) { 
-            Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStopped.Count -gt 1) { "es" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
+            Write-Message -Level Info "Pool brain backgound process$(if ($BrainsStopped.Count -ne 1) { "es" }) for $(($BrainsStopped | Sort-Object) -join ", " -replace ",([^,]*)$", " &`$1") stopped."
         }
     }
 }
@@ -1326,43 +1327,65 @@ function Get-Rate {
     $Headers = @{ "Accept" = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"; "Cache-Control" = "no-cache" }
     $Useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
 
-    # Get FIAT currency exchange rates (Base = USD)
-    # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
-    $URL = "https://api.exchangerate.fun/latest"
-    Write-Message -Level Info "Loading FIAT currency exchange rates from '$URL'..."
+    # Conmarketcap provides FIAT and crypto currency exchange rates
+    $URL = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price?symbol"
+    Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
     $APIallowedFailureCount = 3
     do { 
-        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.AllCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
         $APIallowedFailureCount --
         if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
-    } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+    } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIallowedFailureCount -eq 0 -or $APIdata.StatusCode -in @(200, 404, 429) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)")
 
     if ($APIerror) { 
-        Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+        # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($(($APIerror.Message | ConvertFrom-Json).status.error_message))"
     }
-    elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($FIATexchangeRates = ($APIdata.Content | ConvertFrom-Json).rates)) { 
-
+    elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinMarketCapPriceSymbol = ($APIdata.Content | ConvertFrom-Json).data)) { 
         $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } }
-        foreach ($Currency in $Session.AllCurrencies) { 
-            if ($FIATexchangeRates.$Currency -and $Currency -ne "USD") { 
-                $Rates.USD.$Currency = [Double]$FIATexchangeRates.$Currency
-            }
-        }
-        Remove-Variable Currency -ErrorAction Ignore
+        $CoinMarketCapPriceSymbol.ForEach{ $Rates.USD.($_.Symbol) = 1 / [Double]($_.Quotes.Where{ $_.symbol -eq "USD" }.price) } 
+    }
+    Remove-Variable APIdata, APIerror, CoinMarketCapPriceSymbol -ErrorAction Ignore
 
-        # Use coinlore as primary currency exchange rate source
-        # Assets does not contain price information
-        $URL = "https://api.coinlore.net/api/assets"
-        Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
+    $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
+    if ($Session.RatesMissingCurrencies) { 
+        # Get FIAT currency exchange rates (Base = USD)
+        # The API returns rates as 1 USD = X FIAT. So Price_in_USD = 1 / Rate
+        $URL = "https://api.exchangerate.fun/latest"
+        Write-Message -Level Info "Loading FIAT currency exchange rates from '$URL'..."
         $APIallowedFailureCount = 3
         do { 
-            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
             $APIallowedFailureCount --
             if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
-            Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+            # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+        }
+        elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($FIATexchangeRates = ($APIdata.Content | ConvertFrom-Json).rates)) { 
+            if (-not $Rates.USD) { $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } } }
+            foreach ($Currency in ($Session.RatesMissingCurrencies.Where{ $FIATexchangeRates.$_ -and $_ -ne "USD" -and -not $Rates.USD.$_ })) { 
+                $Rates.USD.$Currency = [Double]$FIATexchangeRates.$Currency
+            }
+            Remove-Variable Currency -ErrorAction Ignore
+        }
+    }
+
+    $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
+    if ($Session.RatesMissingCurrencies) { 
+        # Use coinlore as secondary currency exchange rate source
+        # Assets does not contain price information
+        $URL = "https://api.coinlore.net/api/assets"
+        Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
+        $APIallowedFailureCount = 3
+        do { 
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+            $APIallowedFailureCount --
+            if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
+        } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
+
+        if ($APIerror) { 
+            # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
         }
         elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreAssetsData = ($APIdata.Content | ConvertFrom-Json).data)) { 
             if ($RelevantIDs = $CoinloreAssetsData.Where{ $_.symbol -in $Session.AllCurrencies}.id) { 
@@ -1370,15 +1393,16 @@ function Get-Rate {
                 # Get price information
                 $APIallowedFailureCount = 3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL/?id=$(($RelevantIDs | Sort-Object -Unique) -join ',')" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL/?id=$(($RelevantIDs | Sort-Object -Unique) -join ',')" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
                 if ($APIerror) { 
-                    Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
+                    # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
                 }
                 elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreTicker = $APIdata.Content | ConvertFrom-Json)) { 
+                    if (-not $Rates.USD) { $Rates = [System.Collections.SortedList]@{ USD = [System.Collections.SortedList]@{ "USD" = 1 } } }
                     $CoinloreTicker.ForEach{ 
                         if (-not $Rates.USD.($_.symbol)) { $Rates.USD.($_.symbol) = [Double](1 / $_.price_usd) }
                     }
@@ -1386,64 +1410,46 @@ function Get-Rate {
             }
         }
         Remove-Variable APIdata, APIerror, CoinloreAssetsData, CoinloreTicker, RelevantIDs, URL -ErrorAction Ignore
+    }
 
-        $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
-        if ($Session.RatesMissingCurrencies) { 
-            $URL = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price?symbol"
-            Write-Message -Level Info "Loading crypto currency exchange rates from '$URL'..."
-            $APIallowedFailureCount = 3
-            do { 
-                # try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.RatesMissingCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri "$URL=$($Session.AllCurrencies -join ",")&convert=USD" -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
-                $APIallowedFailureCount --
-                if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
-            } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
-
-            if ($APIerror) { 
-                Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($(($APIerror.Message | ConvertFrom-Json).status.error_message))"
-            }
-            elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinMarketCapPriceSymbol = ($APIdata.Content | ConvertFrom-Json).data)) { 
-                $CoinMarketCapPriceSymbol.ForEach{ $Rates.USD.($_.Symbol) = 1 / [Double]($_.Quotes.Where{ $_.symbol -EQ "USD" }.price) } 
-            }
-            $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
-            Remove-Variable APIdata, APIerror, CoinMarketCapPriceSymbol -ErrorAction Ignore
-        }
-        Remove-Variable Currency, FIATexchangeRates, RequestUrl -ErrorAction Ignore
-
-        # Need at least USD/BTC conversion rates
-        if ($Rates.USD.BTC) {
-            $Currencies = $Rates.USD.Keys
-            # Add mBTC
-            if ($Session.Config.UsemBTC) { 
-                $Currencies += "mBTC"
-                $Rates.USD."mBTC" = [Double]($Rates.USD.BTC * 1000)
-            }
-
-            $Rates.USD.Keys.Where{ $_ -ne "USD" }.ForEach{ 
-                $Currency = $_
-                $Rates.$Currency = [System.Collections.SortedList]@{ }
-                $Rates.USD.Keys.ForEach{ 
-                    $Rates.$Currency.$_ = [Double]($Rates.USD.$_ / $Rates.USD.$Currency)
-                }
-            }
-            Remove-Variable Currency -ErrorAction Ignore
-
-            Write-Message -Level Verbose "Loaded crypto currency exchange rates.$(if ($Session.RatesMissingCurrencies) { " APIs do not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
-            if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
-                $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
-                Write-Message -Level Warn "APIs do not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
-                $Session.Config.FIATcurrency = $FallbackCurrency
-                Remove-Variable FallbackCurrency
-            }
-            $Session.Rates = $Rates
-            $Session.RefreshTimestamp = (Get-Date -Format "G")
-            $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
-            $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
-            Remove-Variable Currencies, Rates -ErrorAction Ignore
+    $Session.RatesMissingCurrencies = Compare-Object @($Rates.USD.Keys | Select-Object) @($Session.AllCurrencies | Select-Object) -PassThru
+    if ($Session.RatesMissingCurrencies) { 
+        if ($Session.Config.FIATcurrency -in $Session.RatesMissingCurrencies) { 
+            $FallbackCurrency = @(@($Session.Config.ExtraCurrencies) + @("USD")).Where{ $_ -in $Session.FIATcurrencies.Keys -and $Rates.$_ }[0]
+            Write-Message -Level Warn "APIs do not provide exchange rate for configured main FIAT currency $($Session.Config.FIATcurrency) ($($Session.FIATcurrencies.($Session.Config.FIATcurrency))). Using $FallbackCurrency ($($Session.FIATcurrencies.$FallbackCurrency)) as fallback."
+            $Session.Config.FIATcurrency = $FallbackCurrency
+            Remove-Variable FallbackCurrency
         }
     }
-    else { 
-        $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -ErrorAction Ignore)
+
+    # Need at least USD/BTC conversion rates
+    if ($Rates.USD.BTC) {
+        $Currencies = $Rates.USD.Keys
+        # Add mBTC
+        if ($Session.Config.UsemBTC) { 
+            $Currencies += "mBTC"
+            $Rates.USD."mBTC" = [Double]($Rates.USD.BTC * 1000)
+        }
+
+        $Rates.USD.Keys.Where{ $_ -ne "USD" }.ForEach{ 
+            $Currency = $_
+            $Rates.$Currency = [System.Collections.SortedList]@{ }
+            $Rates.USD.Keys.ForEach{ 
+                $Rates.$Currency.$_ = [Double]($Rates.USD.$_ / $Rates.USD.$Currency)
+            }
+        }
+        Remove-Variable Currency -ErrorAction Ignore
+
+        Write-Message -Level Verbose "Loaded FIAT and crypto currency exchange rates.$(if ($Session.RatesMissingCurrencies) { " APIs do not provide rates for $($Session.RatesMissingCurrencies -join ", " -replace ",([^,]*)$", " &`$1"). $($Session.Branding.ProductLabel) cannot calculate the FIAT or BTC value for $(if ($Session.RatesMissingCurrencies.Count -ne 1) { "these currencies" } else { "this currency" })." })"
+        $Session.Rates = $Rates
+        $Session.RefreshTimestamp = (Get-Date -Format "G")
+        $Session.RatesUpdated = [DateTime]::Now.ToUniversalTime()
+        $Session.Rates | ConvertTo-Json -Depth 5 | Out-File -LiteralPath $RatesCacheFileName -Force -ErrorAction Ignore
+        Remove-Variable Currencies, Rates -ErrorAction Ignore
+    }
+
+    if (-not $Session.Rates.USD) { 
+        $RatesCache = ([System.IO.File]::ReadAllLines($RatesCacheFileName) | ConvertFrom-Json -AsHashtable -ErrorAction Ignore)
 
         if ($RatesCache.PSObject.Properties.Name) { 
             $Session.Rates = $RatesCache
@@ -1527,7 +1533,7 @@ function Write-Message {
                 $Session.LogFile = "$($Session.MainPath)\Logs\$($Session.Branding.ProductLabel)_$(Get-Date -Format "yyyy-MM-dd").log"
                 [System.IO.File]::AppendAllText($Session.LogFile, $FormattedMessage + [System.Environment]::NewLine)
             }
-            catch { }
+            catch { if ($Error) { $Error.Remove($Error[0]) } }
             $Mutex.ReleaseMutex()
         }
 
@@ -1609,7 +1615,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.3
+    # ZPool24hr & ZPoolPlus removed in v6.9.4
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"
@@ -1712,7 +1718,7 @@ function Update-ConfigFile {
             try { 
                 [Console]::SetCursorPosition($CursorPosition.X + $Message.length, $CursorPosition.y)
                 Write-Host " ✔" -ForegroundColor Green
-            } catch { }
+            } catch { if ($Error) { $Error.Remove($Error[0]) } }
         }
     }
 }
@@ -1797,7 +1803,9 @@ function Edit-File {
             }
             Start-Sleep -Milliseconds 100
         }
-        catch { }
+        catch { 
+            if ($Error) { $Error.Remove($Error[0]) }
+        }
     }
     if ((Get-Item -Path $FileName).LastWriteTime -gt $FileWriteTime) { 
         if (($FileName -eq $Session.PoolsConfigFile.Replace($PWD, ".")) -or ($FileName -eq $Session.ConfigFile.Replace($PWD, "."))) { 
@@ -1917,7 +1925,7 @@ function Enable-Stat {
             # Keep global in-memory state tracking mirrors completely synced
             if ($Global:Stats[$Name] -is [Hashtable]) { $Global:Stats[$Name].Disabled = $false }
         }
-        catch { }
+        catch { if ($Error) { $Error.Remove($Error[0]) } }
     }
 }
 
@@ -1962,7 +1970,7 @@ function Disable-Stat {
         # Keep global in-memory state tracking mirrors completely synced
         if ($Global:Stats[$Name] -is [Hashtable]) { $Global:Stats[$Name].Disabled = $true }
     }
-    catch { }
+    catch { if ($Error) { $Error.Remove($Error[0]) } }
 }
 
 function Set-Stat { 
@@ -2117,7 +2125,7 @@ function Set-Stat {
             # Native direct disk flush
             [System.IO.File]::WriteAllText("$PWD\Stats\$Name.txt", $JsonTemplate)
         }
-        catch { }
+        catch { if ($Error) { $Error.Remove($Error[0]) } }
         finally { 
             $Mutex.ReleaseMutex()
         }
@@ -2183,6 +2191,7 @@ function Get-Stat {
             catch { 
                 Write-Message -Level Warn "Stat file '$Name' is corrupt and will be reset."
                 Remove-Stat $Name
+                if ($Error) { $Error.Remove($Error[0]) }
             }
         }
 
@@ -2233,25 +2242,22 @@ function Invoke-TcpRequest {
         # ConnectAsync returns a Task. We wait for it with a strict timeout.
         $ConnectTask = $Client.ConnectAsync($Server, $Port)
 
-        if (-not $ConnectTask.Wait($TimeoutMilliseconds)) { 
-            $Client.Dispose()
-            return
+        if ($ConnectTask.Wait($TimeoutMilliseconds)) { 
+            # 4. Stream aquisition
+            $Stream = $Client.GetStream()
+            $Reader = [IO.StreamReader]::new($Stream)
+            $Writer = [IO.StreamWriter]::new($Stream)
+            $Writer.WriteLine($Request)
+            $Writer.Flush()
+            if ($ReadToEnd) { return $Reader.ReadToEnd() } else { return $Reader.ReadLine() }
         }
-
-        # 4. Stream aquisition
-        $Stream = $Client.GetStream()
-        $Reader = [IO.StreamReader]::new($Stream)
-        $Writer = [IO.StreamWriter]::new($Stream)
-        $Writer.WriteLine($Request)
-        $Writer.Flush()
-        if ($ReadToEnd) { return $Reader.ReadToEnd() } else { return $Reader.ReadLine() }
     }
-    catch { }
+    catch { if ($Error) { $Error.Remove($Error[0]) } }
     finally { 
-        if ($null -eq $Reader) { $Reader.Dispose() }
-        if ($null -eq $Writer) { $Writer.Dispose() }
-        if ($null -eq $Stream) { $Stream.Dispose() }
-        if ($null -eq $Client) { $Client.Dispose() }
+        if ($null -ne $Reader) { $Reader.Dispose() }
+        if ($null -ne $Writer) { $Writer.Dispose() }
+        if ($null -ne $Stream) { $Stream.Dispose() }
+        if ($null -ne $Client) { $Client.Dispose() }
     }
 }
 
@@ -2913,7 +2919,7 @@ function Get-Version {
     $URL = "https://raw.githubusercontent.com/UselessGuru/UG-Miner/main/Version.txt"
     $APIallowedFailureCount = 3
     do { 
-        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+        try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
         $APIallowedFailureCount --
     } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
@@ -2927,7 +2933,7 @@ function Get-Version {
                     try { 
                         [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                         Write-Host " ✔" -ForegroundColor Green
-                    } catch { }
+                    } catch { if ($Error) { $Error.Remove($Error[0]) } }
                     Initialize-AutoUpdate -UpdateVersion $UpdateVersion
                 }
                 else { 
@@ -2935,7 +2941,7 @@ function Get-Version {
                     try { 
                         [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                         Write-Host " ✔" -ForegroundColor Green
-                    } catch { }
+                    } catch { if ($Error) { $Error.Remove($Error[0]) } }
                 }
             }
             else { 
@@ -2943,7 +2949,7 @@ function Get-Version {
                 try { 
                     [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                     Write-Host " ✔" -ForegroundColor Green
-                } catch { }
+                } catch { if ($Error) { $Error.Remove($Error[0]) } }
             }
             if ($Session.Config.ShowChangeLog) { 
                 Start-Process "https://github.com/UselessGuru/UG-Miner/releases/tag/v$($UpdateVersion.Version)"
@@ -2954,7 +2960,7 @@ function Get-Version {
             try { 
                 [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
                 Write-Host " ✔" -ForegroundColor Green
-            } catch { }
+            } catch { if ($Error) { $Error.Remove($Error[0]) } }
         }
     }
     else { 
@@ -2962,7 +2968,7 @@ function Get-Version {
         try { 
             [Console]::SetCursorPosition($Session.CursorPosition.X, $Session.CursorPosition.Y)
             Write-Host " ✖" -ForegroundColor Red
-        } catch { }
+        } catch { if ($Error) { $Error.Remove($Error[0]) } }
     }
 }
 
@@ -2986,7 +2992,7 @@ function Initialize-AutoUpdate {
         $CursorPosition = $Host.UI.RawUI.CursorPosition
         "Downloading update script '$($UpdateScript)'..." | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Verbose
         try { 
-            Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15 2>$null 3>$null 4>$null 5>$null 6>$null  
+            Invoke-WebRequest -Uri $UpdateScriptURL -OutFile $UpdateScript -TimeoutSec 15 2>$null 3>$null 4>$null 5>$null 6>$null
             [Console]::SetCursorPosition((31  + $UpdateScript.length), $CursorPosition.y)
             Write-Host " ✔" -ForegroundColor Green
         }
@@ -3012,7 +3018,7 @@ function Initialize-AutoUpdate {
             [Console]::SetCursorPosition(29, $CursorPosition.y)
             Write-Host " ✖" -ForegroundColor Red
         }
-        catch { }
+        catch { if ($Error) { $Error.Remove($Error[0]) } }
         "Downloading update script failed. Cannot complete auto-update :-(" | Tee-Object -FilePath $UpdateLog -Append | Write-Message -Level Error
     }
 }
@@ -3025,7 +3031,7 @@ function Update-PoolWatchdog {
     )
 
     # Apply watchdog to pools
-    if ($Session.Config.Watchdog) { 
+    if ($Session.Config.Watchdog -and $Session.Config.PoolName.Count -gt 1) { 
         # We assume that miner is up and running, so watchdog timer is not relevant
         if ($RelevantWatchdogTimers = $Session.WatchdogTimers.Where{ $_.MinerName -notin $Session.MinersRunning }) { 
             # Only pools with a corresponding watchdog timer object are of interest
@@ -3033,7 +3039,7 @@ function Update-PoolWatchdog {
 
                 # Add miner reason "Pool suspended by watchdog 'all algorithms'", only if more than one pool
                 ($RelevantWatchdogTimers | Group-Object -Property PoolName).ForEach{ 
-                    if ($Session.Config.PoolName.Count -gt 1 -and $_.Count -ge (2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count + 1)) { 
+                    if ($Session.Config.PoolName.Count -gt 1 -and $_.Count -ge 2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
                         $Group = $_.Group
                         if ($PoolsToSuspend = $RelevantPools.Where{ $_.Name -eq $Group[0].PoolName }) { 
                             $PoolsToSuspend.ForEach{ [Void]$_.Reasons.Add("Pool suspended by watchdog [all algorithms]") }
@@ -3044,20 +3050,20 @@ function Update-PoolWatchdog {
                 Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
 
                 if ($RelevantPools = $RelevantPools.Where{ -not ($_.Reasons -match "Pool suspended by watchdog .+") }) { 
-                    # Add miner reason "Pool suspended by watchdog 'Algorithm [Algorithm]'"
-                    ($RelevantWatchdogTimers | Group-Object -Property PoolName, Algorithm).ForEach{ 
-                        if ($_.Count -ge 2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count - 1) { 
+                    # Add miner reason "Pool suspended by watchdog 'Algorithm [AlgorithmVariant]'"
+                    ($RelevantWatchdogTimers | Group-Object -Property PoolName, AlgorithmVariant).ForEach{ 
+                        if ($_.Count -ge 2 * $Session.WatchdogCount * ($_.Group.DeviceNames | Sort-Object -Unique).Count) { 
                             $Group = $_.Group
-                            if ($PoolsToSuspend = $RelevantPools.Where{ $_.Name -eq $Group[0].PoolName -and $_.Algorithm -eq $Group[0].Algorithm }) { 
-                                $PoolsToSuspend.ForEach{ [Void]$_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].Algorithm)]") }
-                                Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].Algorithm)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
+                            if ($PoolsToSuspend = $RelevantPools.Where{ $_.Name -eq $Group[0].PoolName -and $_.AlgorithmVariant -eq $Group[0].AlgorithmVariant }) { 
+                                $PoolsToSuspend.ForEach{ [Void]$_.Reasons.Add("Pool suspended by watchdog [Algorithm $($Group[0].AlgorithmVariant)]") }
+                                Write-Message -Level Warn "Pool '$($Group[0].PoolName) [Algorithm $($Group[0].AlgorithmVariant)]' is suspended by watchdog until $(($Group.Kicked | Sort-Object -Top 1).AddSeconds($Session.WatchdogReset).ToLocalTime().ToString("T"))."
                             }
                         }
                     }
                     Remove-Variable Group, PoolsToSuspend -ErrorAction Ignore
                 }
             }
-            Remove-Variable RelevantPools
+            Remove-Variable RelevantPools 
         }
         Remove-Variable RelevantWatchdogTimers
     }
@@ -3113,7 +3119,7 @@ function Update-AllDAGdata {
         # Get block data for from whattomine.com
         $APIallowedFailureCount = 3
         do { 
-            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
             $APIallowedFailureCount --
             if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3161,7 +3167,7 @@ function Update-AllDAGdata {
         # Get block data for from whattomine.com
         $APIallowedFailureCount = 3
         do { 
-            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
             $APIallowedFailureCount --
             if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3213,7 +3219,7 @@ function Update-AllDAGdata {
                 # Get block data from StakeCube block explorer
                 $APIallowedFailureCount =3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3254,7 +3260,7 @@ function Update-AllDAGdata {
                 # Get block data from PHI block explorer
                 $APIallowedFailureCount = 3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3294,7 +3300,7 @@ function Update-AllDAGdata {
                 # Get block data from MeowCoin block explorer
                 $APIallowedFailureCount = 3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3334,7 +3340,7 @@ function Update-AllDAGdata {
             # Get block data from Parallax block explorer
             $APIallowedFailureCount = 3
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { }
+                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
                 $APIallowedFailureCount --
                 if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
             } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3357,9 +3363,6 @@ function Update-AllDAGdata {
                         Write-Message -Level Warn "Failed to load DAG data for '$Currency' from '$URL'."
                     }
                 }
-            }
-            catch { 
-                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
             }
         }
     }
@@ -3641,7 +3644,7 @@ function Start-APIserver {
         while (-not ($Session.APIversion) -and $RetryCount -gt 0) { 
             Start-Sleep -Seconds 1
             try { 
-                if ($Session.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Session.Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop)) { 
+                if ($Session.APIversion = [Version](Invoke-RestMethod "http://localhost:$($Session.Config.APIport)/apiversion" -TimeoutSec 1 -ErrorAction Stop 2>$null 3>$null 4>$null 5>$null 6>$null)) { 
                     $Session.APIport = $Session.Config.APIport
                     if ($Session.Config.APIlogfile) { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss"): API (version $($Session.APIversion)) started." | Out-File $Session.Config.APIlogfile -Force -ErrorAction Ignore }
                     $Session.MinerBaseAPIport = $Session.APIport + 1
@@ -3651,7 +3654,7 @@ function Start-APIserver {
                     break
                 }
             }
-            catch { }
+            catch { if ($Error) { $Error.Remove($Error[0]) } }
             $RetryCount--
         }
 
@@ -3955,7 +3958,7 @@ function Read-Config {
             try { 
                 $ConfigFromFile = [System.Collections.SortedList]::New(([System.IO.File]::ReadAllLines($ConfigFile) | ConvertFrom-Json -AsHashtable | Select-Object), [StringComparer]::OrdinalIgnoreCase)
             }
-            catch { }
+            catch { if ($Error) { $Error.Remove($Error[0]) } }
 
             if ($ConfigFromFile.Keys.Count -eq 0) { 
                 $CorruptConfigFile = "$($ConfigFile)_$(Get-Date -Format "yyyy-MM-dd_HH-mm-ss").corrupt"
@@ -4096,6 +4099,6 @@ function Stop-LogReader {
     if ($Session.Config.LogViewerExe -and $Session.Config.LogViewerConfig -and (Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }) { 
         try { 
             (Get-CimInstance Win32_Process).Where{ $_.CommandLine -eq """$($Session.Config.LogViewerExe)"" $($Session.Config.LogViewerConfig)" }.ProcessId | ForEach-Object { Stop-Process -Id $_ }
-        } catch { }
+        } catch { if ($Error) { $Error.Remove($Error[0]) } }
     }
 }

@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
-# minor pearlhash improvements to NVIDIA RTX 3000, 4000 and 5000 series gpu's
-# improved pearlhash for NVIDIA A100/CMP170HX
-# improved pearlhash for AMD RDNA2 and RDNA3
+# nexapow is not supported on AMD gpu's with pre-RDNA architecture
+# evohash and some other x-like algorithms produce incorrect shares on NVIDIA Blackwell gpu's
+# any report is welcome! :)
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-multi/releases/download/0.51.8/wildrig-multi-windows-0.51.8.zip"
+$URL = "https://github.com/andru-kun/wildrig-multi/releases/download/0.52.1/wildrig-multi-windows-0.52.1.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"
@@ -44,12 +44,12 @@ $Algorithms = @(
     @{ Algorithm = "Ghostrider";       Type = "AMD"; Fee = @(0.01);   MinMemGiBfree = 2;    WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo ghostrider" }
     @{ Algorithm = "Hex";              Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hex" }
     @{ Algorithm = "HMQ1725";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo hmq1725" } # CryptoDredge-v0.27.0 is fastest
-    @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.0075); MinMemGiBfree = 0.62; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @("NiceHash"); Arguments = " --algo kawpow" } # TeamRedMiner-v0.10.21 is fastest on Navi
+    @{ Algorithm = "KawPow";           Type = "AMD"; Fee = @(0.0075); MinMemGiBfree = 0.62; WarmupTimes = @(60, 0);   ExcludeGPUarchitectures = " ";       ExcludePools = @("NiceHash"); Arguments = " --algo kawpow" } # TeamRedMiner-v0.10.21 is fastest on Navi
 #   @{ Algorithm = "Lyra2RE2";         Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo lyra2v2" } # ASIC
     @{ Algorithm = "MegaBtx";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 1;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo megabtx" }
     @{ Algorithm = "MemeHash";         Type = "AMD"; Fee = @(0);      MinMemGiBfree = 1;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo memehash" }
     @{ Algorithm = "MeowPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiBfree = 1.24; WarmupTimes = @(75, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo meowpow" }
-    @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiBfree = 1;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" } # https://github.com/andru-kun/wildrig-multi/issues/329
+    @{ Algorithm = "Mike";             Type = "AMD"; Fee = @(0.01);   MinMemGiBfree = 1;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo mike" }
     @{ Algorithm = "NexaPow";          Type = "AMD"; Fee = @(0.0075); MinMemGiBfree = 3;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = "^GCN\d$"; ExcludePools = @("NiceHash"); Arguments = " --algo nexapow" } # https://github.com/andru-kun/wildrig-multi/issues/277
 #   @{ Algorithm = "Nist5";            Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo nist5" } # ASIC
 #   @{ Algorithm = "PearlHash";        Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo pearlhash" } # https://github.com/andru-kun/wildrig-multi/issues/383, only supports pool pearlhash.xyz
@@ -64,7 +64,7 @@ $Algorithms = @(
 #   @{ Algorithm = "SHA256";           Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256" } # ASIC
 #   @{ Algorithm = "SHA256d";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256d" } # ASIC
     @{ Algorithm = "SHA256csm";        Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256csm" }
-    @{ Algorithm = "SHA256t";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256t" } # Takes too long until it starts mining
+    @{ Algorithm = "SHA256t";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256t" }
     @{ Algorithm = "SHA256q";          Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha256q" }
     @{ Algorithm = "SHA512256d";       Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo sha512256d" }
     @{ Algorithm = "Skein2";           Type = "AMD"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";       ExcludePools = @();           Arguments = " --algo skein2" }
@@ -163,7 +163,7 @@ $Algorithms = @(
     @{ Algorithm = "Ghostrider";       Type = "NVIDIA"; Fee = @(0.01);   MinMemGiBfree = 2;    WarmupTimes = @(180, 60); ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo ghostrider" }
     @{ Algorithm = "Hex";              Type = "NVIDIA"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hex" }
     @{ Algorithm = "HMQ1725";          Type = "NVIDIA"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo hmq1725" } # CryptoDredge-v0.27.0 is fastest
-    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiBfree = 1.24; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo kawpow" }
+    @{ Algorithm = "KawPow";           Type = "NVIDIA"; Fee = @(0.0075); MinMemGiBfree = 1.24; WarmupTimes = @(60, 0);   ExcludeGPUarchitectures = " ";                ExcludePools = @("NiceHash"); Arguments = " --algo kawpow" }
 #   @{ Algorithm = "Lyra2RE2";         Type = "NVIDIA"; Fee = @(0);      MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo lyra2v2" } # ASIC
     @{ Algorithm = "MegaBtx";          Type = "NVIDIA"; Fee = @(0);      MinMemGiBfree = 1;    WarmupTimes = @(90, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo megabtx" }
     @{ Algorithm = "MemeHash";         Type = "NVIDIA"; Fee = @(0);      MinMemGiBfree = 1;    WarmupTimes = @(45, 15);  ExcludeGPUarchitectures = " ";                ExcludePools = @();           Arguments = " --algo memehash" }

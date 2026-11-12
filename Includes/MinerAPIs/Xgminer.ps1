@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\Xgminer.ps1
-Version:        6.9.3
-Version date:   2026/11/01
+Version:        6.9.4
+Version date:   2026/11/12
 #>
 
 [NoRunspaceAffinity()]
@@ -28,6 +28,8 @@ class XgMiner : Miner {
         $Timeout = 5 # seconds
         $Data = [PSCustomObject]@{ }
         $Request = @{ command = "summary$(if ($this.Algorithms[1]) { "+summary2" })"; parameter = "" } | ConvertTo-Json -Compress
+        if ($Error) { $Error.Remove($Error[0]) }
+
         $Response = ""
 
         try { 
@@ -98,7 +100,7 @@ class XgMiner : Miner {
                 $PowerConsumption = $this.GetPowerConsumption()
             }
 
-            return [PSCustomObject]@{ 
+            return @{ 
                 Date             = [DateTime]::Now.ToUniversalTime()
                 Hashrate         = $Hashrate
                 PowerConsumption = $PowerConsumption

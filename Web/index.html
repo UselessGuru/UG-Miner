@@ -4,7 +4,7 @@
           </div>
           <div id="toolbar">
             <button id="btn-re-benchmark" class="btn btn-primary" disabled title="The marked miners will re-benchmark&#10;Use this if the recorded hashrate is unrealistic or to re-enable disabled miners">Re-benchmark</button>
-            <button id="btn-re-measure" class="btn btn-primary" disabled title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
+            <button id="btn-re-measure" class="btn btn-primary" disabled display="none" title="The marked miners will re-measure power consumption&#10;Use this if the recorded power consumption is unreal">Re-measure power consumption</button>
             <button id="btn-failed" class="btn btn-warning" disabled title="The marked miners will be marked as failed&#10;Use this if the miners fail benchmarking or produce unpredictable results">Mark as failed</button>
             <button id="btn-disable" class="btn btn-danger" disabled title="The marked miners will be marked as disabled&#10;To re-enable trigger re-benchmarking">Disable</button>
             <button id="btn-enable" class="btn btn-success" disabled title="The marked miners will be enabled">Enable</button>
@@ -114,11 +114,11 @@
               });
             };
 
-            if (configrunning.CalculatePowerCost == false) {
-              $cookieIdTable = "Index_Earnings"
+            if (configrunning.CalculatePowerCost) {
+              $cookieIdTable = "Index_Profit"
             }
             else { 
-              $cookieIdTable = "Index_Profit"
+              $cookieIdTable = "Index_Earnings"
             };
 
             if (configrunning.DisableDualAlgoMining == true) {
@@ -184,13 +184,21 @@
               document.getElementById("btn-enable").disabled = !Boolean($table.bootstrapTable("getSelections").length);
             });
 
+            $("#miners").on("post-header.bs.table", function () {
+                if (configrunning.CalculatePowerCost) {
+                document.getElementById("btn-re-measure").style.visibility = "visible";
+              } else { 
+                document.getElementById("btn-re-measure").style.visibility = "hidden";
+              };
+            });
+
             $("#btn-re-benchmark").click(function () {
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $("body").css("cursor", "wait");
                 $url = "/functions/stat/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type" : "Hashrate"
                 };
                 $(".modal-body").load($url, $payload, function() {
@@ -203,12 +211,12 @@
             });
 
             $("#btn-re-measure").click(function () {
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $("body").css("cursor", "wait");
                 $url = "/functions/stat/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type" : "PowerConsumption"
                 };
                 $(".modal-body").load($url, $payload, function() {
@@ -221,12 +229,12 @@
             });
 
             $("#btn-failed").click(function () {
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $("body").css("cursor", "wait");
                 $url = "/functions/stat/set";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info}))),
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info}))),
                   "Type": "Hashrate",
                   "Value": 0
                 };
@@ -240,12 +248,12 @@
             });
 
             $("#btn-disable").click(function () {
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $("body").css("cursor", "wait");
                 $url = "/functions/stat/disable"
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text("Disable miner");
@@ -258,11 +266,11 @@
 
             $("#btn-enable").click(function () {
               $("body").css("cursor", "wait");
-              var $data = $table.bootstrapTable("getSelections");
-              if ($data.length >= 1) {
+              var selectedRows = $table.bootstrapTable("getSelections");
+              if (selectedRows.length >= 1) {
                 $url = "/functions/stat/enable";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text("Enable miner");
@@ -286,8 +294,6 @@
               setInterval("tailf()", 500);
               // Fix, button text is wrong
               document.getElementsByName("toggle")[0].innerHTML = "<i class=\"fa fa-toggle-off\"></i> Show card view";
-              // updateSummary();
-              // updateButtonStatus();
             });
           </script>
 <!-- End of page scripts "index.html" -->

@@ -3,7 +3,7 @@
 UG-Miner monitors mining pools in real-time in order to find the most profitable algorithm  
 and runs the most profitable miner.
 
-Version 6.9.3 / Updated 2026/11/01
+Version 6.9.4 / Updated 2026/11/12
 
 Copyright (c) 2018-2026 UselessGuru
 
@@ -68,7 +68,7 @@ UG-Miner code is partly based on
    <sup>(*)</sup> To enable MiningDutch or ProHashing you must configure a username.  
    To mine with NiceHash you must register and use the BTC address provided by NiceHash.
 
-It is recommended to run UG-Miner with local computer administrator privileges (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. 
+It is recommended to run UG-Miner with local computer administrator privileges (UG-Miner_AsAdmin.bat) to ensure file permissions and firewall rules can be set without user intervention. In addition some miners priority can not be controlled without adminstrative privileges.
 
 ![alt text](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Images/UG-Miner_FirstStart.png "UG-Miner web GUI")
 
@@ -318,10 +318,10 @@ UI style automatically switches to full during benchmarking or when measuring po
 
 ## Requirements
 
-Windows 10.x and PowerShell Version 7.4.x or higher is required.
+Windows 10.x and PowerShell Version 7.6.x or higher is required.
 
-UG-Miner works best with the latest PWSH version 7.6.9.  
-[Download the installer for version 7.6.9](https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/PowerShell-7.6.9-win-x64.msi)  
+UG-Miner works best with the latest PWSH version 7.7.0.  
+[Download the installer for version 7.7.0](https://github.com/PowerShell/PowerShell/releases/download/v7.6.9/PowerShell-7.7.0-win-x64.msi)  
 
 Some miners may need 'Visual C+' runtime libraries. Download and extract  
 [Visual C+ RunTimes](https://github.com/UselessGuru/UG-Miner-Extras/releases/download/Visual-C-Runtimes-All-in-One-Sep-2019/Visual-C-Runtimes-All-in-One-Sep-2019.zip)  

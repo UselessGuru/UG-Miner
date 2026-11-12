@@ -136,8 +136,8 @@
           <div style="padding-top: 0.2rem;" title="Enter proxy IP address and port&#10;e.g. 192.168.1.1:3128">Proxy address & port
             <input type="text" id="Proxy" name="Proxy" maxlength=22 size=30>
           </div>
-          <div style="padding-top: 0.4rem;" title="If enabled UG-Miner will open firewall ports for all miners&#10;Administrator rights required (or you must accept the UAC prompts)">
-            <input type="checkbox" class="toggle-switch" id="OpenFirewallPorts" name="OpenFirewallPorts"> Open firewall ports (administrator rights required)
+          <div style="padding-top: 0.4rem;" title="If enabled UG-Miner will open firewall ports for all miners&#10;administrator privileges required (or you must accept the UAC prompts)">
+            <input type="checkbox" class="toggle-switch" id="OpenFirewallPorts" name="OpenFirewallPorts"> Open firewall ports (administrator privileges required)
           </div>
           <br>
         </td>
@@ -261,7 +261,7 @@
             <input type="checkbox" class="toggle-switch" id="DisableMinerFee" name="DisableMinerFee"> Disable miner fees (where applicable)
           </div>
           <div style="padding-top: 0.6rem;" title="Enable miner specific tweaks, e.g. sharper memory timings or mild overclock&#10;&#10;Note: This may cause stability issues, use with caution!">
-            <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (administrator rights required)
+            <input type="checkbox" class="toggle-switch" id="UseMinerTweaks" name="UseMinerTweaks"> Enable miner tweaks (administrator privileges required)
           </div>
           <div style="padding-top: 0.4rem;" title="Minimum number of continous cycles a miner must mine&#10;the same algorithm[currency]@pool before switching is allowed&#10;&#10;e.g. 3 would force a miner to mine the same algorithm[currency]@pool&#10;for at least 3 cycles before switching to another algorithm or pool&#10;&#10;(min: 1, max: 10; default: 1)&#10;&#10;Note: This does not apply when benchmarking or when the pool is no longer available" for="MinCycle"> Enforce mining for at least
             <input type="number" id="MinCycle" name="MinCycle" min=1 max=10 value=0 step=1 style="width: 2.7em; text-align:right;"> cycles before switching
