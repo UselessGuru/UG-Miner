@@ -8,7 +8,7 @@ Fixes:
 - Pool Kryptex: Error in pool file 'Pools\Kryptex.ps1'
 
 Enhancements:
-- Web GUI / Miners: Hide 'Re-measure Power Usage' button when $CalculatePowerCost -eq $false
+- Web GUI / Miners: Hide 'Re-measure power consumption' button when $CalculatePowerCost -eq $false
 
 Miner changes:
 - BzMiner-v100.80 (update)
