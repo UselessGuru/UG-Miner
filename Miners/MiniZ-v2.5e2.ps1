@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 # Added support for RTX 50XX GPUs.
@@ -80,7 +80,7 @@ if ($Algorithms) {
 
                         @{ 
                             API         = "MiniZ"
-                            Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort -cd=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d2}' -f $_ } -join " ")"
+                            Arguments   = "$Arguments --jobtimeout=900 --retries=99 --retrydelay=1 --stat-int=10 --nohttpheaders --latency --all-shares --extra --tempunits=C --show-pers --fee-time=60 --telemetry $MinerAPIPort --cuda-devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:d2}' -f $_ } -join " ")"
                             DeviceNames = $AvailableMinerDevices.Name
                             DownloadURL = $URL
                             Fee         = $_.Fee # Dev fee

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -1332,7 +1332,7 @@ $LegacyGUIelements.ActiveMinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)                            ")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-ComplexObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[0].Value)                            ")
             Remove-Variable RowIndex
         }
     }
@@ -1508,7 +1508,7 @@ $LegacyGUIelements.MinersDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Miners.Where{ $_.Info -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-ComplexObject | ConvertTo-Json -depth 0)", (64 + 4096), "Miner: $($this.Rows[$_.RowIndex].Cells[2].Value)")
             Remove-Variable RowIndex
         }
     }
@@ -1625,7 +1625,7 @@ $LegacyGUIelements.PoolsDGV.Add_CellDoubleClick(
     { 
         if ($this.SelectedRows.Count -eq 1) { 
             $RowIndex = $_.RowIndex
-            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Pools.Where{ $_.Key -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, PoolPorts, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Get-SortedObject | ConvertTo-Json -depth 0)", (64 + 4096), "Pool: $($this.Rows[$_.RowIndex].Cells[0].Value)")
+            [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($Session.Pools.Where{ $_.Key -eq $this.Rows[$RowIndex].Cells[0].Value } | Select-Object -ExcludeProperty Arguments, Data, DataReaderJob, DataSampleTimestamp, Devices, EnvVars, PoolNames, PoolPorts, Process, ProcessJob, StatEnd, StatStart, ValidDataSampleTimestamp | Sort-ComplexObject | ConvertTo-Json -depth 0)", (64 + 4096), "Pool: $($this.Rows[$_.RowIndex].Cells[0].Value)")
             Remove-Variable RowIndex
         }
     }
@@ -1793,7 +1793,7 @@ $LegacyGUIelements.SwitchingLogDGV.Name = "SwitchingLogDGV"
 $LegacyGUIelements.SwitchingLogDGV.ReadOnly = $true
 $LegacyGUIelements.SwitchingLogDGV.RowHeadersVisible = $false
 $LegacyGUIelements.SwitchingLogDGV.SelectionMode = "FullRowSelect"
-$LegacyGUIelements.SwitchingLogDGV.Add_CellDoubleClick({ [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($LegacyGUIelements.SwitchingLogDGV.DataSource.Rows[$_.RowIndex] | Select-Object * -ExcludeProperty ItemArray, Table, RowError, RowState, HasErrors | Get-SortedObject | ConvertTo-Json)", (64 + 4096), "Entry: $($this.Rows[$_.RowIndex].Cells[0].Value)") })
+$LegacyGUIelements.SwitchingLogDGV.Add_CellDoubleClick({ [Void][Microsoft.VisualBasic.Interaction]::MsgBox("$($LegacyGUIelements.SwitchingLogDGV.DataSource.Rows[$_.RowIndex] | Select-Object * -ExcludeProperty ItemArray, Table, RowError, RowState, HasErrors | Sort-ComplexObject | ConvertTo-Json)", (64 + 4096), "Entry: $($this.Rows[$_.RowIndex].Cells[0].Value)") })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellClick({ if ($this.Rows[$_.RowIndex].Tag -eq "ToggleSelect") { $this.Rows[$_.RowIndex].Selected = $false; $this.Rows[$_.RowIndex].Tag = $null } })
 $LegacyGUIelements.SwitchingLogDGV.Add_CellMouseDown({ if ($this.SelectedRows.Count -eq 1 -and $this.Rows[$_.RowIndex].Selected) { $this.Rows[$_.RowIndex].Tag = "ToggleSelect" } })
 $LegacyGUIelements.SwitchingLogDGV.Add_MouseUp({ if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Right) { $LegacyGUIelements.ContextMenuStrip.Enabled = [Boolean]$this.SelectedRows } })

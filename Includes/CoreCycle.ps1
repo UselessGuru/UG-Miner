@@ -19,12 +19,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 using module .\Include.psm1
+
 # Read all miner classes
+[Environment]::CurrentDirectory = $Session.MainPath
 (Get-ChildItem -Path ".\Includes\MinerAPIs\*.ps1" -File).ForEach{ . $_.FullName }
 
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs

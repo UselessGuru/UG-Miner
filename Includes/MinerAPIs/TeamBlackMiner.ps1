@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\lolMiner.ps1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 [NoRunspaceAffinity()]
@@ -43,11 +43,11 @@ class TeamBlackMiner : Miner {
             $SharesRejected = [Int64]0
             $SharesInvalid = [Int64]0
 
-            foreach ($Algorithm in $this.Algorithms) { 
+            foreach ($Pool in $this.Workers.Pool) { 
                 $Data.pool.PSObject.Properties.Name.ForEach{ 
                     if ($null -eq $Data.pool.$_.total_hashrate) { return $null }
-                    if ($Data.pool.$_.Algo -eq $Algorithm) { 
-                        $HashrateName = [String]$Algorithm
+                    if ($Data.pool.$_.url -eq $Pool.host) { 
+                        $HashrateName = [String]$Pool.Algorithm
                         $HashrateValue = [Double]($Data.pool.$_.total_hashrate)
                         $Hashrate | Add-Member @{ $HashrateName = $HashrateValue }
 

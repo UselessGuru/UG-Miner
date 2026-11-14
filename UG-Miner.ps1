@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 using module .\Includes\Include.psm1
@@ -170,7 +170,7 @@ param(
     [Parameter (Mandatory = $false)]
     [UInt16]$PoolAPIallowedFailureCount = 3, # Max number of pool API request attempts
     [Parameter (Mandatory = $false)]
-    [Double]$PoolAllowedPriceIncreaseFactor = 5, # Max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.
+    [Double]$PoolAllowedPriceChangeFactor = 5, # Max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.
     [Parameter (Mandatory = $false)]
     [UInt16]$PoolAPIretryInterval = 3, # Time (in seconds) until pool API request retry. Note: Do not set this value too small to avoid temporary blocking by pool
     [Parameter (Mandatory = $false)]
@@ -324,7 +324,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.9.4"
+    Version      = [System.Version]"6.9.5"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

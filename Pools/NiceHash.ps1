@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\NiceHash.ps1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 param(
@@ -65,13 +65,10 @@ foreach ($Pool in ($BrainData.Where{ $_.Updated -ge $Session.PoolDataCollectedTi
 
     $Key = "$($Name)_$($AlgorithmNorm)"
     $Value = [Double]($Pool.paying / 100000000)
+    $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
 
-    $Stat = Get-Stat -Name "$($Key)_Profit"
-    if ($Stat.Live -and $Value -gt ($Stat.Live * $Session.Config.PoolAllowedPriceIncreaseFactor)) { 
-        [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceIncreaseFactor)x higher than previous price)")
-    }
-    else { 
-        $Stat = Set-Stat -Name "$($Key)_Profit" -Value $Value -FaultDetection $false
+    if ($Stat.Minute_Fluctuation -gt $Session.Config.PoolAllowedPriceChangeFactor) { 
+        [Void]$Reasons.Add("Unrealistic price (price in pool API data is more than $($Session.Config.PoolAllowedPriceChangeFactor)x different from previous price)")
     }
 
     @{ 

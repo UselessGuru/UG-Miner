@@ -17,29 +17,29 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
-# Added experimental support for locking memory clock of CMP 30/40/50/70/90 HX at 5000, 810, and 405 Mhz on linux
-# This new feature brings 20 to 50% more efficiency to cmp cards on all core algos.
-# It is experimental and has only been tested on hiveos with driver version 610.43.03
-# use the miner's built in oc option --mclk for setting the memory clock.
+# Efficiency improvement for 30xx, 40xx, and 50xx series
+# Performance improvement for 20xx and CMP 40/50hx ( lock the memory clock to 810/405 )
+# Performance improvement for cmp100-210
+# Added support for Zstd compression of proofs (saves bandwidth and helps with latency on the pools that support it)
 
-# Added experimental support for locking memory to 405 Mhz while keeping the core clock in the normal range for 20xx, 30xx, 40xx, and 50xx series. Only available on linux. 
-# The power drop from 810 to 405 is a minor one. It doesn't seem to help 50xx series much but should have a noticeable efficiency improvement on the other generations for all core algos.
-# It has been tested on driver v595 and v610.  580 and older versions are not supported in this release.
-# use the miner's built in oc option --mclk for setting the memory clock.
+# Added a new feature --power-save (eg: --power-save 1 or --power-save *,1,2)
 
-# Pearlhash:
-# Performance improvement for V100/CMP100-210
-# Minor performance improvement on 20xx, 30xx and 40xx cards.
-# Added an optional telemetry on pearlhash that sends the active gpu names to the pool on the authorize request. use --disable-pearlhash-telemetry if you wish to opt out.
+# It takes a level between 1 and 3 and works on top of your OC settings and might save some watts on all algos.  Works better with a locked core clock.
+# power-save is highly recommended to be tried on 5070 ti, 5080, 5090, 20xx series and CMP cards(non hbm) . Lower end 50xx series cards seems to be only working with driver version 610.43.03 (other drivers might just crash) and it doesn't help them much.
+# Higher levels are not always better. for 30xx and 40xx series, the effect is more subtle and level 1 might be better than level 2 (These cards only have two levels)
+# It can potentially lead to crashes and stability issues like other overclock settings.
 
-# Added core offset, memory offset, gpu voltage, gpu memory temperature to the console stats.
-# Added --stats-interval(default 30s) to control the frequency of showing console stats. 
-# Added native support for locking memory clock of 20xx series cards on linux and Windows.
-# Minor bug fixes
+# Added --vcore-offset(e.g. -12.5)  and --vcore-target( e.g. 768.75)
+
+# These are another way of adjusting the V/F curve. You typically can get the same result with just locking core clock and adding a core offset.
+
+# Added locking memory clock to 405 on Windows
+# Added support for 405 memory clock on older drivers
+# Added native overclocking for Pascal cards
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") })) { return }
 
@@ -51,18 +51,19 @@ $DeviceEnumerator = "Type_Slot"
 $Algorithms = @( 
     @{ Algorithms = @("CrypticHashV2", "");    Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a cryptix_ox8") }
     @{ Algorithms = @("DynexSolve", "");       Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
+    @{ Algorithms = @("Parano1d", "");         Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a noid") }
     @{ Algorithms = @("QHash", "");            Type = "AMD"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
     @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "AMD"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelishashv3") }
     @{ Algorithms = @("XelisHashV3", "");      Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
 
-     
-    @{ Algorithms = @("CrypticHashV2", "");    Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a cryptix_ox8") }
-    @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 120); ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
-    @{ Algorithms = @("PearlHash", "");        Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a pearlhash") }
-    @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
-    @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelishashv3") }
-    @{ Algorithms = @("Quantus", "");          Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a qantus") }
-    @{ Algorithms = @("XelisHashV3", "");      Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
+    @{ Algorithms = @("CrypticHashV2", "");    Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a cryptix_ox8") }
+    @{ Algorithms = @("DynexSolve", "");       Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 120); ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a dynex") }
+    @{ Algorithms = @("Parano1d", "");         Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 15);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a noid") }
+    @{ Algorithms = @("PearlHash", "");        Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = "^Pascal$|^Turing$"; ExcludePools = @(@(), @()); Arguments = @(" -a pearlhash") }
+    @{ Algorithms = @("QHash", "");            Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a qhash") }
+    @{ Algorithms = @("Qhash", "XelisHashV3"); Type = "NVIDIA"; Fee = @(0.03); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a qhash", " --a2 xelishashv3") }
+    @{ Algorithms = @("Quantus", "");          Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a qantus") }
+    @{ Algorithms = @("XelisHashV3", "");      Type = "NVIDIA"; Fee = @(0.02); MinMemGiBfree = 2; WarmupTimes = @(180, 10);  ExcludeGPUarchitectures = " ";                 ExcludePools = @(@(), @()); Arguments = @(" -a xelishashv3") }
 )
 
 $Algorithms = $Algorithms.Where{ $MinerPools[0][$_.Algorithms[0]] }
@@ -79,7 +80,7 @@ if ($Algorithms) {
 
         $Algorithms.Where{ $_.Type -eq $Type }.ForEach{ 
             $ExcludeGPUarchitectures = $_.ExcludeGPUarchitectures
-            if ($SupportedMinerDevices = $MinerDevices.Where{ $_.Type -eq "CPU" -or $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
+            if ($SupportedMinerDevices = $MinerDevices.Where{ $_.Architecture -notmatch $ExcludeGPUarchitectures }) { 
 
                 $ExcludePools = $_.ExcludePools
                 foreach ($Pool0 in $MinerPools[0][$_.Algorithms[0]].Where{ $ExcludePools[0] -notcontains $_.Name }) { 
@@ -90,7 +91,7 @@ if ($Algorithms) {
 
                             $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool0.AlgorithmVariant)$(if ($Pool1) { "&$($Pool1.AlgorithmVariant)" })"
 
-                            $Arguments = "$($_.Arguments[0]) --pool $(if ($Pool0.PoolPorts[1]) { "+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "://$($Pool0.Host):$($Pool0.PoolPorts[0])" }) --wallet $($Pool0.User) --pass $($Pool0.Pass)"
+                            $Arguments = "$($_.Arguments[0]) --pool stratum$(if ($Pool0.PoolPorts[1]) { "+ssl://$($Pool0.Host):$($Pool0.PoolPorts[1])" } else { "://$($Pool0.Host):$($Pool0.PoolPorts[0])" }) --wallet $($Pool0.User) --pass $($Pool0.Pass)"
 
                             if (($_.Algorithms[1])) { $Arguments = "$Arguments$($_.Arguments[1]) --o2 stratum$(if ($Pool1.PoolPorts[1]) { "+ssl://$($Pool1.Host):$($Pool1.PoolPorts[1])" } else { "://$($Pool1.Host):$($Pool1.PoolPorts[0])" }) --w2 $($Pool1.User) --p2 $($Pool1.Pass)" }
 

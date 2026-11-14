@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -432,7 +432,14 @@ class Miner : IDisposable {
                 # Load miner API file
                 . ".\Includes\MinerAPIs\$($args[0]).ps1"
                 $ProgressPreference = "SilentlyContinue"
-                $Miner = ($args[1] | ConvertFrom-Json) -as $args[0]
+
+                # Cannot convert to miner when Workers is present, need to investigate
+                $M = ($args[1] | ConvertFrom-Json)
+                $Workers = $M.Workers
+                $M.PSObject.Properties.Remove("Workers")
+                $Miner = $M -as $args[0]
+                $Miner | Add-Member Workers $Workers -Force
+
                 Start-Sleep -Seconds 2
 
                 while ($true) { 
@@ -447,7 +454,9 @@ class Miner : IDisposable {
             Remove-Variable Miner, LoopEnd -ErrorAction Ignore
         }
 
-        # Start miner data reader, devices property required for GetPowerConsumption/ConfiguredPowerConsumption
+        # Start miner data reader
+        # Devices property required for GetPowerConsumption/ConfiguredPowerConsumption
+        # Workers property required for TeamBlack API
         $ConfigData = @{
             Algorithms             = $this.Algorithms
             DataCollectInterval    = $this.DataCollectInterval
@@ -455,6 +464,7 @@ class Miner : IDisposable {
             Name                   = $this.Name
             Port                   = $this.Port
             ReadPowerConsumption   = $this.ReadPowerConsumption
+            Workers                = $this.Workers
         } | ConvertTo-Json -Depth 5 -Compress
 
         # 2. Escape the path to handle spaces safely
@@ -1615,7 +1625,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.4
+    # ZPool24hr & ZPoolPlus removed in v6.9.5
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"
@@ -1665,43 +1675,44 @@ function Update-ConfigFile {
         switch ($_) { 
             # To replace a configuration item: 
             # "OldConfigItemName" { $Config.NewConfigItemName = $Config.$_; $Config.Remove($_) }
-            "BalancesShowInMainCurrency"  { $Config.BalancesShowInFIATcurrency     = $Config.$_; $Config.Remove($_); break }
-            "ExcludeMinerName"            { $Config.$_                             = $Config.$_ -replace '^-'; break }
-            "LogBalanceAPIResponse"       { $Config.BalancesTrackerLogAPIResponse  = $Config.$_; $Config.Remove($_); break }
-            "LogToScreen"                 { $Config.LogLevel                       = $Config.$_; $Config.Remove($_); break }
-            "MainCurrency"                { $Config.FIATcurrency                   = $Config.$_; $Config.Remove($_); break }
-            "PowerConsumptionIdleSystemW" { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
-            "ShowAccuracy"                { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
-            "ShowAccuracyColumn"          { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
-            "ShowAllOptimalMiners"        { $Config.ShowAllOptimalMiners           = $Config.$_; $Config.Remove($_); break }
-            "ShowCoinName"                { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
-            "ShowCoinNameColumn"          { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
-            "ShowCurrency"                { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
-            "ShowCurrencyColumn"          { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
-            "ShowEarning"                 { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningColumn"           { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningBias"             { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
-            "ShowEarningBiasColumn"       { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
-            "ShowHashrate"                { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
-            "ShowHashrateColumn"          { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
-            "ShowMinerFee"                { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
-            "ShowMinerFeeColumn"          { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolFee"                 { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolFeeColumn"           { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
-            "ShowProfit"                  { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitColumn"            { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitBias"              { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
-            "ShowProfitBiasColumn"        { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerConsumption"        { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerConsumptionColumn"  { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerCost"               { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
-            "ShowPowerCostColumn"         { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolBalances"            { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
-            "ShowPoolBalancesColumn"      { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
-            "ShowUser"                    { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
-            "ShowUserColumn"              { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
-            "UnrealMinerEarningFactor"    { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
-            "UnrealPoolPriceFactor"       { $Config.UnrealisticPoolPriceFactor     = $Config.$_; $Config.Remove($_); break }
+            "BalancesShowInMainCurrency"     { $Config.BalancesShowInFIATcurrency     = $Config.$_; $Config.Remove($_); break }
+            "ExcludeMinerName"               { $Config.$_                             = $Config.$_ -replace '^-'; break }
+            "LogBalanceAPIResponse"          { $Config.BalancesTrackerLogAPIResponse  = $Config.$_; $Config.Remove($_); break }
+            "LogToScreen"                    { $Config.LogLevel                       = $Config.$_; $Config.Remove($_); break }
+            "MainCurrency"                   { $Config.FIATcurrency                   = $Config.$_; $Config.Remove($_); break }
+            "PoolAllowedPriceIncreaseFactor" { $Config.PoolAllowedPriceChangeFactor   = $Config.$_; $Config.Remove($_); break }
+            "PowerConsumptionIdleSystemW"    { $Config.PowerConsumptionIdleSystem     = $Config.$_; $Config.Remove($_); break }
+            "ShowAccuracy"                   { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
+            "ShowAccuracyColumn"             { $Config.ShowColumnAccuracy             = $Config.$_; $Config.Remove($_); break }
+            "ShowAllOptimalMiners"           { $Config.ShowAllOptimalMiners           = $Config.$_; $Config.Remove($_); break }
+            "ShowCoinName"                   { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
+            "ShowCoinNameColumn"             { $Config.ShowColumnCoinName             = $Config.$_; $Config.Remove($_); break }
+            "ShowCurrency"                   { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
+            "ShowCurrencyColumn"             { $Config.ShowColumnCurrency             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarning"                    { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningColumn"              { $Config.ShowColumnEarnings             = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningBias"                { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
+            "ShowEarningBiasColumn"          { $Config.ShowColumnEarningsBias         = $Config.$_; $Config.Remove($_); break }
+            "ShowHashrate"                   { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
+            "ShowHashrateColumn"             { $Config.ShowColumnHashrate             = $Config.$_; $Config.Remove($_); break }
+            "ShowMinerFee"                   { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
+            "ShowMinerFeeColumn"             { $Config.ShowColumnMinerFee             = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolFee"                    { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolFeeColumn"              { $Config.ShowColumnPoolFee              = $Config.$_; $Config.Remove($_); break }
+            "ShowProfit"                     { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitColumn"               { $Config.ShowColumnProfit               = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitBias"                 { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
+            "ShowProfitBiasColumn"           { $Config.ShowColumnProfitBias           = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerConsumption"           { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerConsumptionColumn"     { $Config.ShowColumnPowerConsumption     = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerCost"                  { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
+            "ShowPowerCostColumn"            { $Config.ShowColumnPowerCost            = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolBalances"               { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
+            "ShowPoolBalancesColumn"         { $Config.ShowColumnPoolBalances         = $Config.$_; $Config.Remove($_); break }
+            "ShowUser"                       { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
+            "ShowUserColumn"                 { $Config.ShowColumnUser                 = $Config.$_; $Config.Remove($_); break }
+            "UnrealMinerEarningFactor"       { $Config.UnrealisticMinerEarningsFactor = $Config.$_; $Config.Remove($_); break }
+            "UnrealPoolPriceFactor"          { $Config.UnrealisticPoolPriceFactor     = $Config.$_; $Config.Remove($_); break }
 
             # Remove unsupported config items
             default { if ($_ -notin @(@($Session.AllCommandLineParameters.psBase.Keys) + @("CryptoCompareAPIKeyParam") + @("DryRun") + @("PoolsConfig"))) { $Config.Remove($_) } }
@@ -1819,69 +1830,48 @@ function Edit-File {
     Remove-Variable FGWindowPid, FileName, FileWriteTime, MainWindowHandle, NotepadProcessId -ErrorAction Ignore
 }
 
-function Get-SortedObject { 
-
+function Sort-ComplexObject {
+    [CmdletBinding()]
     param (
-        [Parameter (Mandatory = $false, ValueFromPipeline = $true)]
-        [Object]$Object
+        [Parameter(ValueFromPipeline)]
+        $InputObject
     )
 
-    switch -Regex ($Object.GetType().Name) { 
-        "PSCustomObject" { 
-            $SortedObject = [PSCustomObject]@{ }
-            ($Object.PSObject.Properties.Name | Sort-Object).ForEach{ 
-                if ($Object.$_) { 
-                    if ($Object.$_.GetType().Name -eq "Array" -or $Object.$_.GetType().BaseType -match "array|System\.Array") { 
-                        if ($Object[$_].Count -lt 2) { 
-                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_]))
-                        }
-                        else { 
-                            $SortedObject | Add-Member $_ ([System.Collections.Generic.SortedSet[Object]]($Object[$_]))
-                        }
-                    }
-                    elseif ($Object.$_ -and ($Object.$_.GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object.$_.GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
-                        $SortedObject | Add-Member $_ (Get-SortedObject $Object.$_)
-                    }
-                    else { 
-                        $SortedObject | Add-Member $_ $Object.$_
-                    }
-                }
-                else { 
-                    $SortedObject | Add-Member $_ $Object.$_
-                }
+    process {
+        if ($null -eq $InputObject) {
+            return $null
+        }
+
+        # 1. Handle Arrays / Collections (excluding strings and hashtables)
+        if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [String] -and $InputObject -isnot [Hashtable]) {
+            $SortedCollection = foreach ($Item in $InputObject) {
+                Sort-ComplexObject -InputObject $Item
             }
-            break
+            return , $SortedCollection # Unary comma preserves array wrapping
         }
-        "Hashtable|OrderedDictionary|OrderedHashTable|SyncHashtable" { 
-            $SortedObject = [System.Collections.SortedList]::New([StringComparer]::OrdinalIgnoreCase) # as case insensitve sorted hashtable
-            ($Object.GetEnumerator().Name).ForEach{ 
-                if ($Object.$_) { 
-                    if ($Object[$_].GetType().Name -eq "Array" -or $Object[$_].GetType().BaseType -match "array|System\.Array") { 
-                        if ($Object[$_].Count -lt 2) { 
-                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]([Array]$Object[$_])
-                        }
-                        else { 
-                            $SortedObject[$_] = [System.Collections.Generic.SortedSet[Object]]($Object[$_])
-                        }
-                    }
-                    elseif ($Object.$_ -and ($Object[$_].GetType().Name -match "OrderedHashtable|PSCustomObject" -or $Object[$_].GetType().BaseType -match "hashtable|System\.Collections\.Hashtable")) { 
-                        $SortedObject[$_] = Get-SortedObject $Object[$_]
-                    }
-                    else { 
-                        $SortedObject[$_] = $Object[$_]
-                    }
-                }
-                else { 
-                    $SortedObject[$_] = $Object[$_]
-                }
+
+        # 2. Handle Hashtables
+        if ($InputObject -is [Hashtable]) {
+            $SortedHash = [Ordered]@{ }
+            foreach ($Key in ($InputObject.Keys | Sort-Object)) {
+                $SortedHash[$Key] = Sort-ComplexObject -InputObject $InputObject[$Key]
             }
-            break
+            return [PSCustomObject]$SortedHash
         }
-        default { 
-            $SortedObject = $Object | Sort-Object
+
+        # 3. Handle PSCustomObjects or General Objects with Properties
+        if ($InputObject.PSObject -and $InputObject.PSObject.Properties.Count -gt 0) {
+            $SortedHash = [Ordered]@{ }
+            $SortedProps = $InputObject.PSObject.Properties | Sort-Object Name
+            foreach ($Prop in $SortedProps) {
+                $SortedHash[$Prop.Name] = Sort-ComplexObject -InputObject $Prop.Value
+            }
+            return [PSCustomObject]$SortedHash
         }
+
+        # 4. Fallback for Primitives (Strings, Ints, Bools, DateTimes, etc.)
+        return $InputObject
     }
-    return $SortedObject
 }
 
 function Enable-Stat { 
@@ -4007,9 +3997,9 @@ function Read-Config {
                     $ConfigFromFile.EarningsAdjustmentFactor = $Session.AllCommandLineParameters.EarningsAdjustmentFactor
                     Write-Message -Level Warn "Configured EarningsAdjustmentFactor value $($ConfigFromFile.EarningsAdjustmentFactor) is not within supported range (0 - 10). Using default value $($Session.AllCommandLineParameters.EarningsAdjustmentFactor)."
                 }
-                if ($ConfigFromFile.PoolAllowedPriceIncreaseFactor -le 2 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 99) { 
-                    $ConfigFromFile.PoolAllowedPriceIncreaseFactor = $Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor
-                    Write-Message -Level Warn "Configured PoolAllowedPriceIncreaseFactor value $($ConfigFromFile.PoolAllowedPriceIncreaseFactor) is not within supported range (1 - 99). Using default value $($Session.AllCommandLineParameters.PoolAllowedPriceIncreaseFactor)."
+                if ($ConfigFromFile.PoolAllowedPriceChangeFactor -le 2 -or $ConfigFromFile.EarningsAdjustmentFactor -gt 99) { 
+                    $ConfigFromFile.PoolAllowedPriceChangeFactor = $Session.AllCommandLineParameters.PoolAllowedPriceChangeFactor
+                    Write-Message -Level Warn "Configured PoolAllowedPriceChangeFactor value $($ConfigFromFile.PoolAllowedPriceChangeFactor) is not within supported range (1 - 99). Using default value $($Session.AllCommandLineParameters.PoolAllowedPriceChangeFactor)."
                 }
                 if ($ConfigFromFile.CPUMiningReserveCPUcore -lt 0 -or $ConfigFromFile.CPUMiningReserveCPUcore -gt [Environment]::ProcessorCount) { 
                     $ConfigFromFile.CPUMiningReserveCPUcore = $Session.AllCommandLineParameters.CPUMiningReserveCPUcore

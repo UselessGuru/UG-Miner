@@ -17,19 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
-# Minor efficiency improvements on algorithm 'pearlhash' for NVIDIA 3000, 4000 and 5000 GPUs
+# Efficiency improvements on algorithm 'pearlhash' for NVIDIA 3000, 4000 and 5000 GPUs
+# Improvements on algorithm 'pearlhash' for AMD RDNA3 and RDNA4 GPUs
 # Fixes to efficiency fine-tuner
-# Added parameter '--gpu-power-tuner-value'*
-# Default allowed hashrate loss for efficiency fine-tuner is now 3%
-# Bug fixes
+# Devfee for algorithm 'fishhash' is now 0%
+# Removed parameter '--gpu-extra-config'
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -match "OpenCL C [2\.\d+]") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.8.7/SRBMiner-Multi-3-8-7-win64.zip"
+$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.8.8/SRBMiner-Multi-3-8-8-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

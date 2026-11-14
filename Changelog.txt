@@ -1,3 +1,19 @@
+Changelog UG-Miner 6.9.5 2026/11/14
+===================================
+
+Changes:
+- Renamed configuration parameter 'PoolAllowedPriceIncreaseFactor' to 'PoolAllowedPriceChangeFactor'
+
+Fixes:
+- TeamBlackMiner API broken for some dual algorithm combinations
+
+Miner changes:
+- OneZeroMiner-v1.8.6 (update)
+- SRBMinerMulti-v3.8.8 (update)
+- TeamBlackMiner-v2.46 (update)
+- Wildrig-v0.52.2 (update)
+
+
 Changelog UG-Miner 6.9.4 2026/11/12
 ===================================
 
@@ -199,7 +215,7 @@ Changelog UG-Miner 6.8.20 2026/08/14
 ====================================
 
 Changes:
-- Removed configuration item 'Ignore0HashrateSample'
+- Removed configuration parameter 'Ignore0HashrateSample'
 
 Improvements:
 - Core: Minor performance improvements
@@ -344,7 +360,7 @@ Changelog UG-Miner 6.8.10 2026/06/04
 ====================================
 
 Changes:
-- Removed configuration item 'Delay'
+- Removed configuration parameter 'Delay'
 
 Improvements:
 - Core / Include.psm1: Speed optimize functions 'Disable-Stat', 'Enable-Stat', 'Get-Stat', 'Invoke-TcpRequest', 'Set-Stat', 'Test-IsPrime' & 'Write-Message'
@@ -678,7 +694,7 @@ Changelog UG-Miner 6.7.22 2026/01/15
 ====================================
 
 Changes:
-- Removed configuration item 'MinerUseBestPoolsOnly'
+- Removed configuration parameter 'MinerUseBestPoolsOnly'
 
 Improvements:
 - Brains: Remove obsolete code & minor code optimizations
@@ -695,10 +711,10 @@ Changes:
 - Renamed configuration item
     PowerConsumptionIdleSystemW -> PowerConsumptionIdleSystem
   Configuration file will get updated automatically during update
-- Removed configuration item 'PoolTimeout', using calculated value instead. Configuration file will get updated automatically during update
+- Removed configuration parameter 'PoolTimeout', using calculated value instead. Configuration file will get updated automatically during update
 
 Enhancements:
-- Core: Added configuration item 'PoolsMaxAge' (default value: 24)
+- Core: Added configuration parameter 'PoolsMaxAge' (default value: 24)
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
@@ -897,10 +913,10 @@ Changelog UG-Miner 6.7.3 2025/12/04
 ===================================
 
 Changes:
-- Core: Remove configuration item 'MinerSet'
+- Core: Remove configuration parameter 'MinerSet'
 
 Enhancements:
-- Core: Added configuration item 'UseUnprofitableAlgorithms' (default value: false)
+- Core: Added configuration parameter 'UseUnprofitableAlgorithms' (default value: false)
 - Core: Include.psm1 / function 'Read-ConfigFiles': Only builds pool configuration for configured pools
 
 Improvements:
@@ -933,7 +949,7 @@ Changelog UG-Miner 6.7.1 2025/11/25
 ===================================
 
 Enhancements:
-- Core: Added configuration item 'RatesUpdateInterval' (default value: 10); interval between exchange rates updates from min-api.cryptocompare.com
+- Core: Added configuration parameter 'RatesUpdateInterval' (default value: 10); interval between exchange rates updates from min-api.cryptocompare.com
 
 Miner changes:
 - OneZeroMiner-v1.6.9 (update)
@@ -1024,7 +1040,7 @@ Changelog UG-Miner 6.6.0 2025/10/31
 ===================================
 
 Enhancements:
-- Core: Removed configuration item 'ShowColumnPool' (Information is already contained in the miner name)
+- Core: Removed configuration parameter 'ShowColumnPool' (Information is already contained in the miner name)
 
 Improvements:
 - Core: Remove obsolete code & minor code optimizations
@@ -1140,7 +1156,7 @@ Changes:
 - Renamed configuration item
     LogToFile -> LogLevel
   Configuration file will get updated automatically during update
-- Removed configuration item 'LogToScreen'
+- Removed configuration parameter 'LogToScreen'
 
 Fixes:
 - LegacyGUI.ps1: Do not write $Session.OptimalMiners to console window (potential memory leak)
@@ -1157,7 +1173,7 @@ Changelog UG-Miner 6.5.9 2025/08/30
 ===================================
 
 Enhancements:
-- Core: Added configuration item 'UnrealisticAlgorithmDeviceEarningsFactor' (default value. 10). Ignore miner if resulting earnings are more than 'UnrealisticAlgorithmDeviceEarningsFactor' higher than any other miner for the device
+- Core: Added configuration parameter 'UnrealisticAlgorithmDeviceEarningsFactor' (default value. 10). Ignore miner if resulting earnings are more than 'UnrealisticAlgorithmDeviceEarningsFactor' higher than any other miner for the device
 - Brain 'Prohashing': Do not create pool objects for algorithms in error state @ pool
 
 Improvements:
@@ -1233,10 +1249,10 @@ Changes:
     UnrealMinerEarningFactor -> UnrealisticMinerEarningsFactor
     UnrealPoolPriceFactor -> UnrealisticPoolPriceFactor
   Configuration file will get updated automatically during update
-- Removed configuration item 'Transcript' (used for debugging)
+- Removed configuration parameter 'Transcript' (used for debugging)
 
 Enhancements:
-- Core: Added configuration item 'PoolAllowedPriceIncreaseFactor' (default value. 2) for max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.
+- Core: Added configuration parameter 'PoolAllowedPriceIncreaseFactor' (default value. 2) for max. allowed price increase compared with last price. If price increase is higher then the pool will be marked as unavaliable.
 
 Improvements:
 - Core / Console window: Disable QuickEdit mode
@@ -1275,7 +1291,7 @@ Improvements:
 - Core: Minor code optimizations, reduce memory footprint
 
 Fixes:
-- Legacy GUI: Configuration item 'LegacyGUIStartMinimized' not working (regression from 6.2.12)
+- Legacy GUI: configuration parameter 'LegacyGUIStartMinimized' not working (regression from 6.2.12)
 - Pool 'ProHashing': No price data for some algorithms
 
 
@@ -1431,7 +1447,7 @@ Changes:
 - Miners: Rename 'CcminerLyraYesscrypt-v8.21r18v5' to 'CcminerLyraYescrypt-v8.21r18v5'
 
 Fixes:
-- Core: Unprofitable primary & secondary algorithms still available when configuration item 'MinerSet' -lt 2
+- Core: Unprofitable primary & secondary algorithms still available when configuration parameter 'MinerSet' -lt 2
 
 
 Changelog UG-Miner 6.4.26 2025/05/21
@@ -1848,7 +1864,7 @@ Changes:
 - Use csv file format for donation log (DonationLog.csv instead of DonateLog.json)
 
 Enhancements:
-- Added configuration item 'ShowHashrate'
+- Added configuration parameter 'ShowHashrate'
 
 
 Changelog UG-Miner 6.3.20 2024/12/11
@@ -1862,7 +1878,7 @@ Changelog UG-Miner 6.3.19 2024/12/04
 ====================================
 
 Enhancements:
-- Added configuration item 'PoolAllow0Price'
+- Added configuration parameter 'PoolAllow0Price'
 
 Fixes:
 - Brains: Brain price got reset on each loop
@@ -2031,7 +2047,7 @@ Changelog UG-Miner 6.3.6 2024/10/01
 ===================================
 
 Enhancements:
-- Added configuration item 'Ignore0HashrateSample'
+- Added configuration parameter 'Ignore0HashrateSample'
 - Web GUI: Change some icons
 
 Miner changes:
@@ -2126,7 +2142,7 @@ Changelog UG-Miner 6.3.0 2024/09/01
 ===================================
 
 Changes:
-- Core: Remove configuration item 'MinerInstancePerDeviceModel'
+- Core: Remove configuration parameter 'MinerInstancePerDeviceModel'
 - Removed pool 'MiningPoolHub'. Pool is no longer trustworthy. Outstanding balances will not get paid and support will not respond.
 
 Fixes:
@@ -2159,12 +2175,12 @@ Changelog UG-Miner 6.2.28 2024/08/24
 Enhancements:
 - Core / Console window: Optimize hotkey legend
 - Core / Consone window: Optimize miner list when benchmarking or power usage measuring
-- Core: Reduce number of miners to benchmark when configuration item 'BenchmarkAllPoolAlgorithmCombinations' -eq $true
+- Core: Reduce number of miners to benchmark when configuration parameter 'BenchmarkAllPoolAlgorithmCombinations' -eq $true
 - Web GUI: Use [System.Web.HttpUtility]::UrlDecode to decode payload
 
 Fixes:
 - Core: Suppress MemDbg debug message
-- Core: Configuration item 'SSL' not working some scenarios when set in pool configuration (Regression from 6.2.19)
+- Core: configuration parameter 'SSL' not working some scenarios when set in pool configuration (Regression from 6.2.19)
 - Web GUI / Unavailable miners: 'Remove watchdog' not working
 
 Miner changes:
@@ -2253,7 +2269,7 @@ Improvements:
 
 Miner changes:
 - XmrStak-v2.10.8 (reactivated)
-- XLArig-v5.2.4 (Set miner fee to 5% (can be set to 0 when configuration item 'DisableMinerFee' -eq $true))
+- XLArig-v5.2.4 (Set miner fee to 5% (can be set to 0 when configuration parameter 'DisableMinerFee' -eq $true))
 
 
 Changelog UG-Miner 6.2.21 2024/07/30
@@ -2303,10 +2319,10 @@ Changes:
 - Remove recommendation for PWSH version 7.2.x (I can no longer see any difference in memory leak with versions 7.3.x / 7.4.x)
 
 Enhancements:
-- Added configuration item 'PoolAllow0Hashrate'. It is also configurable per pool (edit .'\Config\PoolsConfig.json')
+- Added configuration parameter 'PoolAllow0Hashrate'. It is also configurable per pool (edit .'\Config\PoolsConfig.json')
 - Code cleanup: Remove extra spaces
-- Core: Configuration item 'SSL' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
-- Core: Configuration item 'SSLallowSelfSignedCertificate' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
+- Core: configuration parameter 'SSL' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
+- Core: configuration parameter 'SSLallowSelfSignedCertificate' is now also configurable per pool (edit .'\Config\PoolsConfig.json')
 
 Fixes:
 - Legacy GUI / Switching log: Incorrect background color for stopped miners
@@ -2360,7 +2376,7 @@ Changelog UG-Miner 6.2.16 2024/07/09
 ====================================
 
 Enhancements:
-- Core: Added configuration item 'CPUMiningReserveCPUcore' (Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.)
+- Core: Added configuration parameter 'CPUMiningReserveCPUcore' (Number of CPU cores reserved for main script processing. Helps to get more stable hashrates and faster core loop processing.)
 
 Miner changes:
 - BzMiner-v21.3.0
@@ -2604,7 +2620,7 @@ Changelog UG-Miner 6.2.1 2024/03/24
 ====================================
 
 Enhancements:
-- Added configuration item 'ShowShares'
+- Added configuration parameter 'ShowShares'
 - Core: Minor code optimizations
 
 Fixes:

@@ -17,22 +17,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.4
-Version date:   2026/11/12
+Version:        6.9.5
+Version date:   2026/11/14
 #>
 
-# Kawpow variants OpenCL tuning.
-# Kernel 1 is now using OpenCL 1.1 and adding support for older cards like the AMD Radeon R9 390.
-# Improved gpu memory usage on Nvidia cards.
+# Added support for Octopus (Conflux) on AMD and NVIDIA.
+# Added support for ProgPowZ (Zano) on AMD and NVIDIA.
+# Added support for EPIC-ProgPow (Epic Cash) on AMD and NVIDIA.
+# Improved Pearl and Ergo hashrates on most cards (+5-20%).
+# API: hashrates are reported with decimals.
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"12.9") })) { return }
 
-$URL = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.44/TeamBlackMiner_2_44_cuda_12.9.7z"
+$URL = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.46/TeamBlackMiner_2_46_cuda_12.9.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TBMiner.exe"
 
 $DeviceSelector = @{ AMD = " --cl-devices"; NVIDIA = " --cuda-devices" }
-$DeviceEnumerator = "Vendor_Id"
+$DeviceEnumerator = @{ AMD = "Type_Vendor_Id"; NVIDIA = "Vendor_Slot" }
 
 $Algorithms = @(
     @{ Algorithms = @("EtcHash", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etchash" }
@@ -41,25 +43,29 @@ $Algorithms = @(
     @{ Algorithms = @("EtcHash", "FiroPow");     SecondaryAlgorithmPrefix = "firo";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+firo" }
     @{ Algorithms = @("EtcHash", "KawPow");      SecondaryAlgorithmPrefix = "rvn";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+rvn" }
     @{ Algorithms = @("EtcHash", "MeowPow");     SecondaryAlgorithmPrefix = "meow";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+meow" }
-    @{ Algorithms = @("EtcHash", "VertHash");    SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc" }
+#   @{ Algorithms = @("EtcHash", "VertHash");    SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(75, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo etc+vtc" } # https://github.com/sp-hash/TeamBlackMiner/issues/480
     @{ Algorithms = @("Ethash", "");             SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethash" }
     @{ Algorithms = @("Ethash", "EthashB3");     SecondaryAlgorithmPrefix = "ethb3"; Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = "^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo eth+ethb3" }
     @{ Algorithms = @("Ethash", "EvrProgPow");   SecondaryAlgorithmPrefix = "evr";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+evr" }
     @{ Algorithms = @("Ethash", "FiroPow");      SecondaryAlgorithmPrefix = "firo";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+firo" }
     @{ Algorithms = @("Ethash", "KawPow");       SecondaryAlgorithmPrefix = "rvn";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+rvn" }
     @{ Algorithms = @("Ethash", "MeowPow");      SecondaryAlgorithmPrefix = "meow";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+meow" }
-    @{ Algorithms = @("Ethash", "VertHash");     SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc" }
+#   @{ Algorithms = @("Ethash", "VertHash");     SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(45, 60); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo eth+vtc" } # https://github.com/sp-hash/TeamBlackMiner/issues/480
     @{ Algorithms = @("EthashB3", "");           SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(20, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethashb3" }
     @{ Algorithms = @("EthashB3", "FiroPow");    SecondaryAlgorithmPrefix = "firo";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+firo" }
     @{ Algorithms = @("EthashB3", "EvrProgPow"); SecondaryAlgorithmPrefix = "evr";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+evr" }
     @{ Algorithms = @("EthashB3", "KawPow");     SecondaryAlgorithmPrefix = "rvn";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+rvn" }
     @{ Algorithms = @("EthashB3", "MeowPow");    SecondaryAlgorithmPrefix = "meow";  Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 45); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+meow" }
-    @{ Algorithms = @("EthashB3", "VertHash");   SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc" }
+#   @{ Algorithms = @("EthashB3", "VertHash");   SecondaryAlgorithmPrefix = "vtc";   Type = "AMD"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.51; Tuning = ""; WarmupTimes = @(20, 30); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo ethb3+vtc" } # https://github.com/sp-hash/TeamBlackMiner/issues/480
     @{ Algorithms = @("EvrProgPow", "");         SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo evrprogpow" }
     @{ Algorithms = @("FiroPow", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
     @{ Algorithms = @("KawPow", "");             SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     @{ Algorithms = @("MeowPow", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
-    @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 3.0;  Tuning = ""; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo verthash" }
+    @{ Algorithms = @("Octopus", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo octopus" }
+    # @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = "^Other";  ExcludePools = @(@(), @()); Arguments = " --algo pearl" }
+    @{ Algorithms = @("ProgPowEpic", "");        SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo epicpow" }
+    @{ Algorithms = @("ProgPowZ ", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo progpowz" }
+#   @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 3.0;  Tuning = ""; WarmupTimes = @(30, 0);  ExcludeGPUarchitectures = " ";       ExcludePools = @(@(), @()); Arguments = " --algo verthash" } # https://github.com/sp-hash/TeamBlackMiner/issues/480
  
     @{ Algorithms = @("EtcHash", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etchash" }
     @{ Algorithms = @("EtcHash", "EthashB3");    SecondaryAlgorithmPrefix = "ethb3"; Type = "NVIDIA"; Fee = @(0.005, 0.005); MinMemGiBfree = 1.85; Tuning = " --tweak 2"; WarmupTimes = @(45, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo etc+ethb3" }
@@ -85,6 +91,10 @@ $Algorithms = @(
     @{ Algorithms = @("FiroPow", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo firopow" }
     @{ Algorithms = @("KawPow", "");             SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     @{ Algorithms = @("MeowPow", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 30); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
+    @{ Algorithms = @("Octopus", "");            SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo octopus" }
+    # @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo pearl" }
+    @{ Algorithms = @("ProgPowEpic", "");        SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo epicpow" }
+    @{ Algorithms = @("ProgPowZ ", "");          SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = " --tweak 2"; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo progpowz" }
     @{ Algorithms = @("VertHash", "");           SecondaryAlgorithmPrefix = "";      Type = "NVIDIA"; Fee = @(0.005);        MinMemGiBfree = 3.0;  Tuning = " --tweak 2"; WarmupTimes = @(45, 0);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @()); Arguments = " --algo verthash" }
 )
 
@@ -135,7 +145,7 @@ if ($Algorithms) {
 
                                 @{ 
                                     API              = "TeamBlackMiner"
-                                    Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.($AvailableMinerDevices.Type | Select-Object -Unique)) [$((($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ }) -join ',')]"
+                                    Arguments        = "$Arguments --api --api-version 1.4 --api-port $MinerAPIPort$($DeviceSelector.$Type) [$((($AvailableMinerDevices.($DeviceEnumerator.$Type) | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ }) -join ',')]"
                                     DeviceNames      = $AvailableMinerDevices.Name
                                     DownloadURL = $URL
                                     Fee              = $_.Fee # Dev fee
