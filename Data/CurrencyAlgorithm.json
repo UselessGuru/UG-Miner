@@ -213,6 +213,7 @@
   "MYDOGE": "Scrypt",
   "MYT": "SHA256",
   "NBY": "Neoscrypt",
+  "NEB": "NebHash",
   "NENG": "Scrypt",
   "NEOX": "KawPow",
   "NEXA": "NexaPow",

@@ -19,14 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 using module .\Include.psm1
 
 # Read all miner classes
-[Environment]::CurrentDirectory = $Session.MainPath
 (Get-ChildItem -Path ".\Includes\MinerAPIs\*.ps1" -File).ForEach{ . $_.FullName }
 
 # Set process priority to BelowNormal to avoid hashrate drops on systems with weak CPUs
@@ -319,8 +318,8 @@ try {
         # - not donating and
         # - configuration unchanged and
         # - we have pools and
-        # - the previous cycle was less than half a cycle duration
-        if ($Session.Donation.Running -or $Session.ConfigTimestamp -gt $Session.Timer -or -not $Session.Pools -or $Session.PoolDataCollectedTimeStamp.AddSeconds($Session.Config.Interval / 2) -lt $Session.Timer) { 
+        # - the previous cycle was less than a cycle duration
+        if ($Session.Donation.Running -or $Session.ConfigTimestamp -gt $Session.Timer -or -not $Session.Pools -or $Session.PoolDataCollectedTimeStamp.AddSeconds($Session.Config.Interval) -lt $Session.Timer) { 
 
             # Check for new version
             if (-not $Session.Donation.Running -and $Session.Config.AutoUpdateCheckInterval -and $Session.CheckedForUpdate -lt [DateTime]::Now.AddDays(-$Session.Config.AutoUpdateCheckInterval)) { Get-Version }
@@ -795,6 +794,11 @@ try {
                 $Miner = $_
                 try { 
                     $IsIgnoreFee = $Session.Config.IgnoreMinerFee
+                    $Parts = $Miner.Name.Split('-')
+                    $BaseName = $Parts[0] + "-" + $Parts[1] + "-" + $Parts[2]
+                    $Miner.BaseName_Version_Device = $BaseName
+                    $WorkerStrings = [System.Collections.Generic.List[String]]::new()
+                    $Workers = $Miner.Workers
 
                     try { 
                         $Miner = $Miner -as $Miner.API
@@ -805,22 +809,15 @@ try {
                             [Void]$WorkerStrings.Add("$($Pool.AlgorithmVariant)@$($Pool.Name)")
                             $Workers[$i].Fee = if ($IsIgnoreFee) { 0 } else { $Miner.Fee[$i] }
                         }
-
-                        $Parts = $Miner.Name.Split('-')
-                        $BaseName = $Parts[0] + "-" + $Parts[1] + "-" + $Parts[2]
-                        $Miner.BaseName_Version_Device = $BaseName
                         $Miner.Info = "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"
 
                         $Miner
                     }
                     catch { 
-                        if ($Error) { $Error.Remove($Error[0]) }
                         # [Activator] workaround for PWSH 'forgetting' custom class definitions
                         $M = [Activator]::CreateInstance([Type]$Miner.API)
-                        $M | Add-Member Workers @() -Force
+                        $Miner.Keys.Where{ $_ -ne "Workers" }.ForEach{ $M.$_ = $Miner.$_ }
 
-                        $WorkerStrings = [System.Collections.Generic.List[String]]::new()
-                        $Workers = $Miner.Workers
                         for ($i = 0; $i -lt $Workers.Count; $i++) { 
                             $Pool = $Workers[$i].Pool
                             [Void]$WorkerStrings.Add("$($Pool.AlgorithmVariant)@$($Pool.Name)")
@@ -837,13 +834,7 @@ try {
                             $W.Fee = if ($IsIgnoreFee) { 0 } else { $Miner.Fee[$i] }
                             $M.Workers += $W
                         }
-
-                        $Parts = $Miner.Name.Split('-')
-                        $BaseName = $Parts[0] + "-" + $Parts[1] + "-" + $Parts[2]
-                        $Miner.BaseName_Version_Device = $BaseName
-                        $Miner.Info = "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"
-                        $Miner.Keys.Where{ $_ -ne "Workers" }.ForEach{ $M.$_ = $Miner.$_ }
-
+                        $M.Info = "$BaseName {$($WorkerStrings -join " & ")}$(if ($Parts.Count -gt 4) { " ($($Parts[4]))" })"
                         $M
                     }
                 }
@@ -1542,6 +1533,15 @@ try {
                         $Session.EndCycleMessage = " prematurely (miner failed)"
                         break
                     }
+                    elseif ($Miner.DataReaderJob.JobStateInfo.State -ne "Running") { 
+                        # Miner crashed
+                        $Miner.StatusInfo = "$($Miner.Info) ($($Miner.Data.Count) sample$(if ($Miner.Data.Count -ne 1) { "s" })) data reader exited unexpectedly"
+                        Write-Message -Level Error "Miner $($Miner.StatusInfo)"
+                        $Miner.SetStatus([MinerStatus]::Failed)
+                        $Session.MinersFailed += $Miner
+                        $Session.EndCycleMessage = " prematurely (miner failed)"
+                        break
+                    }
                     else { 
                         if ($Miner.DataReaderJob.HasMoreData) { 
                             if ($Samples = @(Receive-Job -Job $Miner.DataReaderJob)) { 
@@ -1617,7 +1617,7 @@ try {
                     # Set process priority and window title
                     try { 
                         $Miner.Process.PriorityClass = $Global:PriorityNames.($Miner.ProcessPriority)
-                        [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, $Miner.StatusInfo)
+                        [Void][Win32]::SetWindowText($Miner.Process.MainWindowHandle, "$($Miner.StatusInfo)$(if ($Miner.SubStatus -eq "starting") { " [$($Miner.WarmupTimes -join "|")]" })")
                     }
                     catch { 
                         if ($Error) { $Error.Remove($Error[0]) }

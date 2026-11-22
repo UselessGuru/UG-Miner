@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\APIServer.ps1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 using module .\Include.psm1

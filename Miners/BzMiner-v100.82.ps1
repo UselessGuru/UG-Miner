@@ -17,21 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
-# improved pearl hashrate/efficiency on nvidia
-# 5060ti can now do over 2th/w
-# fatal errors such as config.txt/command line parsing now show up immediately
-# new screen with 'e' key to view errors/warnings
-# fixed --oc-reset false
-# dual mining with profit switching (--mo-dual [2..6])
-# added --oc-power-tuner option (WARNING, can crash gpu drivers)
+# improved pearl hashrate for amd rdna 3 and 4 and nvidia 20,30,40,50
+# fixed only first card on windows locking to 405 mem lock
+# improved startup to mining speed
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URL = "https://github.com/bzminer/bzminer/releases/download/v100.80/bzminer_v100.80_windows.zip"
+$URL = "https://github.com/bzminer/bzminer/releases/download/v100.82/bzminer_v100.82_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"

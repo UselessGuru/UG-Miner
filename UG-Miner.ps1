@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           UG-Miner.ps1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 using module .\Includes\Include.psm1
@@ -120,7 +120,7 @@ param(
     [Parameter (Mandatory = $false)]
     [Switch]$LogBalanceAPIResponse = $false, # If true UG-Miner will log the pool balance API data
     [Parameter (Mandatory = $false)]
-    [String[]]$LogLevel = @("Error", "Info", "Verbose", "Warn"), # Log level detail to be written to log file and screen, see Write-Message function; any of "Debug", "Error", "Info", "MemDbg", "Verbose", "Warn"
+    [String[]]$LogLevel = @("Debug", "Error", "Info", "Verbose", "Warn"), # Log level detail to be written to log file and screen, see Write-Message function; any of "Debug", "Error", "Info", "Verbose", "Warn"
     [Parameter (Mandatory = $false)]
     [String]$LogViewerConfig = ".\Utils\UG-Miner_LogReader.xml", # Path to external log viewer config file
     [Parameter (Mandatory = $false)]
@@ -324,7 +324,7 @@ $Session.Branding = @{
     BrandName    = "UG-Miner"
     BrandWebSite = "https://github.com/UselessGuru/UG-Miner"
     ProductLabel = "UG-Miner"
-    Version      = [System.Version]"6.9.5"
+    Version      = [System.Version]"6.9.6"
 }
 $Session.ScriptStartTime = (Get-Process -Id $PID).StartTime.ToUniversalTime()
 

@@ -17,19 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
-# Efficiency improvements on algorithm 'pearlhash' for NVIDIA 3000, 4000 and 5000 GPUs
-# Improvements on algorithm 'pearlhash' for AMD RDNA3 and RDNA4 GPUs
-# Fixes to efficiency fine-tuner
-# Devfee for algorithm 'fishhash' is now 0%
-# Removed parameter '--gpu-extra-config'
+# + Minor efficiency improvements on algorithm 'pearlhash' for NVIDIA 3000, 4000 and 5000 GPUs
+# + NVIDIA 2000 series and CMP40/50HX can now use mem clocks 405/810MHz on algorithm 'pearlhash' with minimal hashrate loss
+# + Added OC capability for AMD RDNA GPUs (Linux only)
+# + Added OC parameter '--gpu-vddc-offset' (NVIDIA & AMD)
+# + Fixed algorithm 'pearlhash' failing to start on Windows and drivers newer than 25.x for AMD RDNA4
+# + Bug fixes
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -match "OpenCL C [2\.\d+]") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.8.8/SRBMiner-Multi-3-8-8-win64.zip"
+$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.8.9/SRBMiner-Multi-3-8-9-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"

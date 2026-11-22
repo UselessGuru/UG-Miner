@@ -17,22 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
-# improved pearlhash power efficiency up to 8% for NVIDIA gpu's
-# improved pearlhash for AMD gpu's
-# implemented --gpu-xbar-offset, --gpu-msvdd and --gpu-msvdd-offset for NVIDIA GPUs for further power-efficiency tuning
-# implemented --gpu-vddc to set a target core voltage
-# fixed an issue where --gpu-vddc-offset wasn't applied
-# implemented monitoring of oc parameters, now miner will restore them in case of outside change/reset
-# implemented basic oc for AMD gpu's(--gpu-core-clock, --gpu-vddc, --gpu-vddc-offset and --gpu-powerlimit)
-# implemented interactive oc tuning via hotkeys, check documentation
+# significant(x10+ times higher, depends on block) nebhash improvements for NVIDIA gpu's
+# initial support of nebhash for AMD RDNA1 and RDNA2 gpu's
+# some improvements to oc settings
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN?$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "7.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0w/wildrig-ng-windows-1.0.0w.zip"
+$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.0y/wildrig-ng-windows-1.0.0y.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig-ng.exe"
 $DeviceEnumerator = "Type_Slot"
@@ -41,6 +36,7 @@ $DeviceEnumerator = "Type_Slot"
 $Algorithms = @(
     @{ Algorithm = "Autolykos2";  Type = "AMD"; Fee = @(0);    MinMemGiBfree = 1.24; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";     ExcludePools = @(); Arguments = " --algo autolykos2" }
     @{ Algorithm = "KawPow";      Type = "AMD"; Fee = @(0.01); MinMemGiBfree = 1.24; WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";     ExcludePools = @(); Arguments = " --algo kawpow" }
+    @{ Algorithm = "Nebius";      Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 3;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";     ExcludePools = @(); Arguments = " --algo nebhash" }
     @{ Algorithm = "NexaPow";     Type = "AMD"; Fee = @(0.01); MinMemGiBfree = 3;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";     ExcludePools = @(); Arguments = " --algo nexapow" }
     @{ Algorithm = "Parano1d";    Type = "AMD"; Fee = @(0.02); MinMemGiBfree = 1;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = "RDNA1"; ExcludePools = @(); Arguments = " --algo noid" }
 #   @{ Algorithm = "PearlHash";   Type = "AMD"; Fee = @(0);    MinMemGiBfree = 2;    WarmupTimes = @(30, 15);  ExcludeGPUarchitectures = " ";     ExcludePools = @(); Arguments = " --algo pearlhash" } # https://github.com/andru-kun/wildrig-ng/issues/6, only supports pool pearlhash.xyz

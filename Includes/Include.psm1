@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -519,7 +519,7 @@ class Miner : IDisposable {
         }
         else { 
             Write-Message -Level Info "Starting miner '$($this.Info)'..."
-            $this.StatusInfo = "$($this.Info) is getting ready [$($this.WarmupTimes -join "|")]"
+            $this.StatusInfo = "$($this.Info) is getting ready"
             $this.SubStatus = "starting"
         }
 
@@ -1625,7 +1625,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.5
+    # ZPool24hr & ZPoolPlus removed in v6.9.6
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"

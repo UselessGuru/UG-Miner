@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\Kryptex.ps1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 using module ..\Includes\Include.psm1
@@ -162,6 +162,7 @@ while ($Config.PoolsConfig.$Name) {
     while (-not $Session.MyIPaddress -or ($Session.NewMiningStatus -eq "Paused" -and $Timestamp.AddSeconds($Session.Config.Interval) -gt [DateTime]::Now.ToUniversalTime()) -or ($Session.NewMiningStatus -eq "Running" -and ($Session.PoolDataCollectedTimeStamp -and $Timestamp -ge $Session.PoolDataCollectedTimeStamp -or ($Session.EndCycleTime -and [DateTime]::Now.ToUniversalTime().AddSeconds($DurationsAvg + 4) -le $Session.EndCycleTime)))) { 
         Start-Sleep -Milliseconds 250
     }
+    $Error.Clear()
 }
 
 Remove-Variable BrainDataFile, Duration, Durations, DurationsAvg, Handler, Name, PoolConfig, PoolObjects, StartTime, TimeStamp, UserAgent -ErrorAction Ignore

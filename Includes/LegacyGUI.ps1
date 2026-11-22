@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\LegacyGUI.psm1
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
 [Void][System.Reflection.Assembly]::Load("System.Windows.Forms")
@@ -2089,7 +2089,7 @@ $LegacyGUIelements.Timer.Add_Tick(
             }
         }
 
-        if ($Session.Config.ShowConsole) { 
+        if ($Config.ShowConsole) { 
             Show-Console
             if ([System.Console]::KeyAvailable) { 
                 $KeyPressed = ([System.Console]::ReadKey($true))

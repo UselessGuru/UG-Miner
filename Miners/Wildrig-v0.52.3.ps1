@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.5
-Version date:   2026/11/14
+Version:        6.9.6
+Version date:   2026/11/22
 #>
 
-# slightly improved pearlhash for NVIDIA Turing and CMP 70HX/90HX gpu's
-# implemented --pearlhash-kernel 2 for NVIDIA Turing(including CMP 40HX/50HX) gpu's, so now you can lock memory to 405/810MHz and get decent speed
+# improved pearlhash power efficiency up to 4% for NVIDIA RTX 2000, 3000, 4000 and 5000 series gpu's
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN1$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-multi/releases/download/0.52.2/wildrig-multi-windows-0.52.2.zip"
+$URL = "https://github.com/andru-kun/wildrig-multi/releases/download/0.52.3/wildrig-multi-windows-0.52.3.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig.exe"
 $DeviceEnumerator = "Bus_Type_Index"

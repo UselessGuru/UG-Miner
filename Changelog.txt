@@ -1,3 +1,20 @@
+Changelog UG-Miner 6.9.6 2026/11/14
+===================================
+
+Changes:
+- Utils: Update external log reader (SnakeTail) [https://github.com/snakefoot/snaketail-net] to version 1.9.9
+
+Fixes:
+- Core: No more 'No miners found' message after stopping and restarting mining processes (regression from 6.9.4)
+
+Miner changes:
+- BzMiner-v100.82 (update)
+- SRBMinerMulti-v3.8.9 (update)
+- TeamBlackMiner-v2.48 (update)
+- Wildrig-v0.52.3 (update)
+- Wildrig-v1.0.0y (update)
+
+
 Changelog UG-Miner 6.9.5 2026/11/14
 ===================================
 
