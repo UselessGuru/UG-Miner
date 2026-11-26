@@ -144,7 +144,7 @@ do {
                     $PayoutThreshold /= 1000
                 }
 
-                $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $GrowthToday = $AvgHourlyGrowth = $AvgDailyGrowth = $AvgWeeklyGrowth = $Delta = $Payout = $HiddenPending = [Double]0
+                $Delta = $Payout = $HiddenPending = [Double]0
 
                 if ($BalanceDataObjects.Count -eq 0) { 
                     $BalanceObject | Add-Member Delta ([Double]0)
@@ -230,29 +230,46 @@ do {
                     $BalanceObject | Add-Member Delta $Delta -Force
                     Remove-Variable Delta, HiddenPending, Payout -ErrorAction Ignore
 
+                    $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $GrowthToday = [Double]0
                     if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -lt 1) { 
                         # Only calculate if current balance data
                         if ($BalanceObject.DateTime -gt $Now.AddMinutes(-1)) { 
-                            $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $BalanceObject.Earnings - $BalanceDataObjects[0].Earnings
+                            $Growth1 = $Growth6 = $Growth24 = $Growth168 = $Growth720 = $BalanceObject.Balance - $BalanceDataObjects[0].Balance
                         }
                     }
                     else { 
                         # Only calculate if current balance data
-                        if ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-1) })   { $Growth1   = $BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-1) } | Sort-Object -Property DateTime -Top 1).Earnings }
-                        if ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-6) })   { $Growth6   = $BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-6) }  | Sort-Object -Property DateTime -Top 1).Earnings }
-                        if ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-24) })  { $Growth24  = $BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-24) }  | Sort-Object -Property DateTime -Top 1).Earnings }
-                        if ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-168) }) { $Growth168 = $BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-168) } | Sort-Object -Property DateTime -Top 1).Earnings }
-                        if ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-720) }) { $Growth720 = $BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-720) } | Sort-Object -Property DateTime -Top 1).Earnings }
+                        if ($RelevantBalanceDataObjects1   = $BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-1) })   { $Growth1   = $BalanceObject.Balance - ($RelevantBalanceDataObjects1   | Sort-Object -Property DateTime -Top 1).Balance }
+                        if ($RelevantBalanceDataObjects6   = $BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-6) })   { $Growth6   = $BalanceObject.Balance - ($RelevantBalanceDataObjects6   | Sort-Object -Property DateTime -Top 1).Balance }
+                        if ($RelevantBalanceDataObjects24  = $BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-24) })  { $Growth24  = $BalanceObject.Balance - ($RelevantBalanceDataObjects24  | Sort-Object -Property DateTime -Top 1).Balance }
+                        if ($RelevantBalanceDataObjects168 = $BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-168) }) { $Growth168 = $BalanceObject.Balance - ($RelevantBalanceDataObjects168 | Sort-Object -Property DateTime -Top 1).Balance }
+                        if ($RelevantBalanceDataObjects720 = $BalanceDataObjects.Where{ $_.DateTime -ge $Now.AddHours(-730) }) { $Growth720 = $BalanceObject.Balance - ($RelevantBalanceDataObjects720 | Sort-Object -Property DateTime -Top 1).Balance }
                     }
+                    if ($Growth1 -lt 0)   { $Growth1 = [Double]0 }
+                    if ($Growth6 -lt 0)   { $Growth6 = [Double]0 }
+                    if ($Growth24 -lt 0)  { $Growth24 = [Double]0 }
+                    if ($Growth168 -lt 0) { $Growth168 = [Double]0 }
+                    if ($Growth720 -lt 0) { $Growth720 = [Double]0 }
+                    if ($Growth6 -lt $Growth1)     { $Growth6 = $Growth1 }
+                    if ($Growth24 -lt $Growth6)    { $Growth24 = $Growth6 }
+                    if ($Growth168 -lt $Growth24)  { $Growth168 = $Growth24 }
+                    if ($Growth720 -lt $Growth168) { $Growth720 = $Growth168 }
 
-                    $AvgHourlyGrowth = if ($BalanceDataObjects.Where{ $_.DateTime -lt $Now.AddHours(-1) }) { ($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalHours }    else { $Growth1 }
-                    $AvgDailyGrowth  = if ($BalanceDataObjects.Where{ $_.DateTime -lt $Now.AddDays(-1) })  { ($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays }     else { $Growth24 }
-                    $AvgWeeklyGrowth = if ($BalanceDataObjects.Where{ $_.DateTime -lt $Now.AddDays(-7) })  { ($BalanceObject.Earnings - $BalanceDataObjects[0].Earnings) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7 } else { $Growth168 }
+                    $AvgHourlyGrowth = if ($RelevantBalanceDataObjects1)   { ($BalanceObject.Balance - $BalanceDataObjects[0].Balance) / ($Now - $BalanceDataObjects[0].DateTime).TotalHours }    else { $Growth1 }
+                    $AvgDailyGrowth  = if ($RelevantBalanceDataObjects24)  { ($BalanceObject.Balance - $BalanceDataObjects[0].Balance) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays }     else { $Growth24 }
+                    $AvgWeeklyGrowth = if ($RelevantBalanceDataObjects168) { ($BalanceObject.Balance - $BalanceDataObjects[0].Balance) / ($Now - $BalanceDataObjects[0].DateTime).TotalDays * 7 } else { $Growth168 }
+                    Remove-Variable RelevantBalanceDataObjects1, RelevantBalanceDataObjects6, RelevantBalanceDataObjects24, RelevantBalanceDataObjects168, RelevantBalanceDataObjects720 -ErrorAction Ignore
+
+                    if ($AvgHourlyGrowth -lt 0) { $AvgHourlyGrowth = [Double]0 }
+                    if ($AvgDailyGrowth -lt 0)  { $AvgDailyGrowth  = [Double]0 }
+                    if ($AvgWeeklyGrowth -lt 0) { $AvgWeeklyGrowth = [Double]0 }
 
                     if ($BalanceDataObjects.Where{ $_.DateTime.Date -eq $Now.Date }) { 
-                        $GrowthToday = [Double]($BalanceObject.Earnings - ($BalanceDataObjects.Where{ $_.DateTime.Date -eq $Now.Date } | Sort-Object -Property DateTime -Top 1).Earnings)
+                        $GrowthToday = [Double]($BalanceObject.Balance - ($BalanceDataObjects.Where{ $_.DateTime.Date -eq $Now.Date } | Sort-Object -Property DateTime -Top 1).Balance)
                         if ($GrowthToday -lt 0) { $GrowthToday = 0 } # to avoid negative numbers
                     }
+                    $LargerGrowth = ($AvgDailyGrowth, $Growth24, $GrowthToday | Measure-Object -Maximum).Maximum
+                    $AddDays = if ($LargerGrowth -gt 1E-4) { ($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / $LargerGrowth } else { $null }
                 }
 
                 $BalanceDataObjects += $BalanceObject
@@ -281,7 +298,7 @@ do {
                             AvgDailyGrowth          = $AvgDailyGrowth
                             AvgWeeklyGrowth         = $AvgWeeklyGrowth
                             ProjectedEndDayGrowth   = if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { $AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours } else { $Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours }
-                            ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if (($AvgDailyGrowth, $Growth24 | Measure-Object -Maximum).Maximum -gt 1E-4) { [DateTime]$Now.AddDays(($PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency) - $BalanceObject.Balance) / (($AvgDailyGrowth, $Growth24) | Measure-Object -Maximum).Maximum) } else { "Unknown" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
+                            ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ($AddDays -le 1000) { [DateTime]$Now.AddDays($AddDays) } else { "> 1000 days" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
                             TrustLevel              = ((($Now - $BalanceDataObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
                             TotalHours              = ($Now - $BalanceDataObjects[0].DateTime).TotalHours
                             PayoutThreshold         = $PayoutThreshold
@@ -328,7 +345,7 @@ do {
                             Payout        = [Double]0
                         }
                     }
-                    Remove-Variable EarningsObject, GrowthToday, PoolTodaysEarnings -ErrorAction Ignore
+                    Remove-Variable EarningsObject, GrowthToday, LargerGrowth, PoolTodaysEarnings -ErrorAction Ignore
                 }
             }
 
