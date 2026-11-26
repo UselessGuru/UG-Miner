@@ -17,17 +17,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.6
-Version date:   2026/11/22
+Version:        6.9.7
+Version date:   2026/11/26
 #>
 
-# improved pearl hashrate for amd rdna 3 and 4 and nvidia 20,30,40,50
-# fixed only first card on windows locking to 405 mem lock
-# improved startup to mining speed
+# Pearl is 4-10% more efficient (TH/W) on RTX 50, RTX 40 and RTX 30 cards
+# Pearl on Windows is up to 0.7% faster on RTX 50 cards
+# Pearl supports zstd stratum compression on pools that ask for it, such as Kryptex
+# --bench and --benchmark now do the same work, at the right difficulty for every algorithm
+# --cpu_threads takes a negative number to leave that many threads free (-4 mines on 28 of 32)
+# The web dashboard has Processes and System pages, with opt-in controls to end a process or reboot the rig
+# The web dashboard's Utilities install NVIDIA drivers, unlock CMP 170HX cards and lift the GeForce tensor cap on Linux
+# The language model server loads Qwen's own FP8 checkpoints, such as Qwen3-32B-FP8
+# Fixed: Llama-3.3-70B could give a wrong first answer after loading
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URL = "https://github.com/bzminer/bzminer/releases/download/v100.82/bzminer_v100.82_windows.zip"
+$URL = "https://github.com/bzminer/bzminer/releases/download/v100.83/bzminer_v100.83_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
@@ -127,7 +133,7 @@ if ($Algorithms) {
 
                             @{ 
                                 API         = "BzMiner"
-                                Arguments   = "$Arguments --hashrate-window 5 --http_enabled --http_address 127.0.0.1 --http_port $MinerAPIPort --disable_udp --no-watchdog$(if ($Type -ne "CPU") { " --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}:00' -f $_ } -join " ")" })"
+                                Arguments   = "$Arguments --hashrate-window 5 --http_enabled --http_address 127.0.0.1 --http_port $MinerAPIPort --stall-guard off --disable_udp --no-watchdog$(if ($Type -ne "CPU") { " --devices $(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}:00' -f $_ } -join " ")" })"
                                 DeviceNames = $AvailableMinerDevices.Name
                                 DownloadURL = $URL
                                 Fee         = $_.Fee # Dev fee

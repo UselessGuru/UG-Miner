@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.6
-Version date:   2026/11/22
+Version:        6.9.7
+Version date:   2026/11/26
 #>
 
 # improved pearlhash power efficiency up to 4% for NVIDIA RTX 2000, 3000, 4000 and 5000 series gpu's

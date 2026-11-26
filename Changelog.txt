@@ -1,3 +1,12 @@
+Changelog UG-Miner 6.9.7 2026/11/26
+===================================
+
+Miner changes:
+- BzMiner-v100.83 (update)
+- Wildrig-v1.0.5 beta (update)
+- XmRig-v6.27.1 (update)
+
+
 Changelog UG-Miner 6.9.6 2026/11/22
 ===================================
 

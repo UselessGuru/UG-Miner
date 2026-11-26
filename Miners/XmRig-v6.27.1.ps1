@@ -17,24 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.6
-Version date:   2026/11/22
+Version:        6.9.7
+Version date:   2026/11/26
 #>
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $Session.DriverVersion.CUDA -ge [Version]"10.2") })) { return }
 
-# - Added support for RandomX v2.
-# - RISC-V: vectorized RandomX main loop.
-# - RISC-V: auto-detect and use vector code for all RandomX AES functions.
-# - RISC-V: detect and use hardware AES.
-# - RISC-V: use vector hardware AES instead of scalar.
-# - RISC-V: Fixed scratchpad prefetch, removed an unnecessary instruction.
-# - RandomX: added VAES-512 support for Zen5.
-# - RandomX: Optimized VAES code.
-# - Fixed keepalive timer logic.
-# - RandomX: ARM64 fixes.
-# - Fixed OpenCL address-space mismatch in keccak_f800_round.
-# - Don't reset nonce during donation rounds.
+# ARM64: RandomX JIT optimizations, dataset prefetch and non-temporal loads, reduced JIT cache invalidation
+# Added ARMv9 CPU detection and optimized build flags
+# RandomX: faster dataset init on RISC-V, fixed ISUB_R in the ARM and RISC-V JIT compilers
+# Fixed RandomX v2 with the Apple assembler
+# Fixed madvise calls
+# Updated FCMP++ block template layout and solo mining code for beta stressnet v3
+# DaemonClient: check TLS fingerprint, use SOCKS5 if configured, fixed socket leak when ZMQ connect fails
+# MSVC builds use hwloc from xmrig-deps
 
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\xmrig.exe"
@@ -42,29 +38,29 @@ $DeviceEnumerator = "Type_Vendor_Index"
 
 # There is no toolkit for CUDA 12.7
 $URL = switch ($Session.DriverVersion.CUDA) { 
-    { $_ -ge [System.Version]"13.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda13_2-win64.7z"; break }
-    { $_ -ge [System.Version]"13.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda13_1-win64.7z"; break }
-    { $_ -ge [System.Version]"13.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda13_0-win64.7z"; break }
-    { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_9-win64.7z"; break }
-    { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_8-win64.7z"; break }
-    { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_6-win64.7z"; break }
-    { $_ -ge [System.Version]"12.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_5-win64.7z"; break }
-    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_4-win64.7z"; break }
-    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_3-win64.7z"; break }
-    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_2-win64.7z"; break }
-    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_1-win64.7z"; break }
-    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda12_0-win64.7z"; break }
-    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_8-win64.7z"; break }
-    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_7-win64.7z"; break }
-    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_6-win64.7z"; break }
-    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_5-win64.7z"; break }
-    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_4-win64.7z"; break }
-    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_3-win64.7z"; break }
-    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_2-win64.7z"; break }
-    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_1-win64.7z"; break }
-    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda11_0-win64.7z"; break }
-    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-cuda10_2-win64.7z"; break }
-    default { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.26.0-msvc-win64.7z" }
+    { $_ -ge [System.Version]"13.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda13_2-win64.7z"; break }
+    { $_ -ge [System.Version]"13.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda13_1-win64.7z"; break }
+    { $_ -ge [System.Version]"13.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda13_0-win64.7z"; break }
+    { $_ -ge [System.Version]"12.9" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_9-win64.7z"; break }
+    { $_ -ge [System.Version]"12.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_8-win64.7z"; break }
+    { $_ -ge [System.Version]"12.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_6-win64.7z"; break }
+    { $_ -ge [System.Version]"12.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_5-win64.7z"; break }
+    { $_ -ge [System.Version]"12.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_4-win64.7z"; break }
+    { $_ -ge [System.Version]"12.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_3-win64.7z"; break }
+    { $_ -ge [System.Version]"12.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_2-win64.7z"; break }
+    { $_ -ge [System.Version]"12.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_1-win64.7z"; break }
+    { $_ -ge [System.Version]"12.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda12_0-win64.7z"; break }
+    { $_ -ge [System.Version]"11.8" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_8-win64.7z"; break }
+    { $_ -ge [System.Version]"11.7" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_7-win64.7z"; break }
+    { $_ -ge [System.Version]"11.6" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_6-win64.7z"; break }
+    { $_ -ge [System.Version]"11.5" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_5-win64.7z"; break }
+    { $_ -ge [System.Version]"11.4" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_4-win64.7z"; break }
+    { $_ -ge [System.Version]"11.3" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_3-win64.7z"; break }
+    { $_ -ge [System.Version]"11.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_2-win64.7z"; break }
+    { $_ -ge [System.Version]"11.1" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_1-win64.7z"; break }
+    { $_ -ge [System.Version]"11.0" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda11_0-win64.7z"; break }
+    { $_ -ge [System.Version]"10.2" } { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-cuda10_2-win64.7z"; break }
+    default { "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/XMrig/xmrig-6.27.1-msvc-win64.7z" }
 }
 
 $Algorithms = @(
@@ -215,7 +211,7 @@ if ($Algorithms) {
                     $MinerName = "$Name-$($AvailableMinerDevices.Count)x$Model-$($Pool.AlgorithmVariant)"
 
                     $Arguments = $_.Arguments
-                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$Threads" }
+                    if ($_.Type -eq "CPU") { $Arguments = "$Arguments --threads=$($AvailableMinerDevices.CIM.NumberOfLogicalProcessors -1)" }
                     else { $Arguments = "$Arguments --no-cpu --opencl --opencl-platform=$($AvailableMinerDevices.PlatformId) --opencl-devices=$(($AvailableMinerDevices.$DeviceEnumerator | Sort-Object -Unique).ForEach{ '{0:x}' -f $_ } -join ',')" }
                     if (-not $Session.IsLocalAdmin) { $Arguments = "$Arguments --randomx-wrmsr=-1" } #  disable MSR mod
 

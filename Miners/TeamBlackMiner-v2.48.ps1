@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.6
-Version date:   2026/11/22
+Version:        6.9.7
+Version date:   2026/11/26
 #>
 
 # Improved the Quantus performance. 1xxx,2xxx,3xxx,4xxx,5xxx series +1-7%
@@ -64,7 +64,7 @@ $Algorithms = @(
     @{ Algorithms = @("KawPow", "");             SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     @{ Algorithms = @("MeowPow", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
     @{ Algorithms = @("Octopus", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo octopus" }
-    @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = "^GCN.+|^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo pearl" } # Crashes and kills RX6600
+#   @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = "^GCN.+|^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo pearl" } # Crashes and kills RX6600, no hash rate with RX5700
     @{ Algorithms = @("ProgPowEpic", "");        SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo epicpow" }
     @{ Algorithms = @("ProgPowZ ", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo progpowz" }
     @{ Algorithms = @("Quantus", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 2;    Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo quantus" }
