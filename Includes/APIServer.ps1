@@ -1043,41 +1043,47 @@ while ($Session.APIversion -and $Server.IsListening) {
             Remove-Variable File, Filename, IncludeData, IncludeFile, IncludeRegex, Key -ErrorAction Ignore
         }
     }
-    # If $Data is null, the API will just return whatever data was in the previous request. Instead, show an error
-    # This happens if the script just started and hasn't filled all the properties in yet.
-    if ($null -eq $Data) { 
-        $Data = @{ "Error" = "API data not available" } | ConvertTo-Json
+
+    try { 
+        # If $Data is null, the API will just return whatever data was in the previous request. Instead, show an error
+        # This happens if the script just started and hasn't filled all the properties in yet.
+        if ($null -eq $Data) { 
+            $Data = @{ "Error" = "API data not available" } | ConvertTo-Json
+        }
+
+        if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
+
+        $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
+        $AcceptEncoding = $Context.Request.Headers["Accept-Encoding"]
+
+        if ($AcceptEncoding -and $AcceptEncoding.Contains("gzip")) { 
+            # Tell the client we are sending gzip
+            $Response.Headers.Add("Content-Encoding", "gzip")
+
+            # Compress and write
+            $MemoryStream = [System.IO.MemoryStream]::new()
+            $GzipStream = [System.IO.Compression.GZipStream]::new($MemoryStream, [System.IO.Compression.CompressionMode]::Compress)
+
+            $GzipStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
+            $GzipStream.Close() # Must close to flush bits to the MemoryStream
+
+            $CompressedBuffer = $MemoryStream.ToArray()
+            $Response.ContentLength64 = $CompressedBuffer.Length
+            $Response.OutputStream.Write($CompressedBuffer, 0, $CompressedBuffer.Length)
+        }
+        else { 
+            # Fallback for clients that don't support gzip
+            $Response.ContentLength64 = $ResponseBuffer.Length
+            $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
+        }
+
+        $Response.Headers.Add("Content-Type", $ContentType)
+        $Response.StatusCode = $StatusCode
+        $Response.Close()
     }
-
-    if ($Session.Config.APIlogfile -and $Session.Config.LogLevel -contains "Debug") { "$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") Response: $Data" | Out-File -LiteralPath $Session.Config.APIlogfile -Append -ErrorAction Ignore }
-
-    $ResponseBuffer = [System.Text.Encoding]::UTF8.GetBytes($Data)
-    $AcceptEncoding = $Context.Request.Headers["Accept-Encoding"]
-
-    if ($AcceptEncoding -and $AcceptEncoding.Contains("gzip")) { 
-        # Tell the client we are sending gzip
-        $Response.Headers.Add("Content-Encoding", "gzip")
-
-        # Compress and write
-        $MemoryStream = [System.IO.MemoryStream]::new()
-        $GzipStream = [System.IO.Compression.GZipStream]::new($MemoryStream, [System.IO.Compression.CompressionMode]::Compress)
-
-        $GzipStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
-        $GzipStream.Close() # Must close to flush bits to the MemoryStream
-
-        $CompressedBuffer = $MemoryStream.ToArray()
-        $Response.ContentLength64 = $CompressedBuffer.Length
-        $Response.OutputStream.Write($CompressedBuffer, 0, $CompressedBuffer.Length)
+    catch { 
+        if ($Error) { $Error.Remove($Error[0]) }
     }
-    else { 
-        # Fallback for clients that don't support gzip
-        $Response.ContentLength64 = $ResponseBuffer.Length
-        $Response.OutputStream.Write($ResponseBuffer, 0, $ResponseBuffer.Length)
-    }
-
-    $Response.Headers.Add("Content-Type", $ContentType)
-    $Response.StatusCode = $StatusCode
-    $Response.Close()
 
     Remove-Variable CompressedBuffer, ContentType, Context, Data, GzipStream, MemoryStream, Parameters, Response, ResponseBuffer, StatusCode -ErrorAction Ignore
 

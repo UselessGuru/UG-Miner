@@ -1,6 +1,9 @@
 Changelog UG-Miner 6.9.7 2026/11/26
 ===================================
 
+Fixes:
+- Balances Tracker: Incorrect growth calculation
+
 Miner changes:
 - BzMiner-v100.83 (update)
 - Wildrig-v1.0.5 beta (update)

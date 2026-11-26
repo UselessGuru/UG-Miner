@@ -1348,6 +1348,7 @@ function Get-Rate {
     } until (($APIerror -and ($APIerror.Message | ConvertFrom-Json).status.error_code -eq 1022) -or $APIallowedFailureCount -eq 0 -or $APIdata.StatusCode -in @(200, 404, 429) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)")
 
     if ($APIerror) { 
+        Remove-Variable APIerror -ErrorAction Ignore
         # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($(($APIerror.Message | ConvertFrom-Json).status.error_message))"
     }
     elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinMarketCapPriceSymbol = ($APIdata.Content | ConvertFrom-Json).data)) { 
@@ -1370,6 +1371,7 @@ function Get-Rate {
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
+            Remove-Variable APIerror -ErrorAction Ignore
             # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
         }
         elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($FIATexchangeRates = ($APIdata.Content | ConvertFrom-Json).rates)) { 
@@ -1395,6 +1397,7 @@ function Get-Rate {
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIerror.Message -eq "The response ended prematurely. (ResponseEnded)" -or $APIallowedFailureCount -eq 0)
 
         if ($APIerror) { 
+            Remove-Variable APIerror -ErrorAction Ignore
             # Write-Message -Level Error "Get-Rate: Query to '$URL' failed ($($APIerror.Message))"
         }
         elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore) -and ($CoinloreAssetsData = ($APIdata.Content | ConvertFrom-Json).data)) { 
@@ -3109,7 +3112,13 @@ function Update-AllDAGdata {
         # Get block data for from whattomine.com
         $APIallowedFailureCount = 3
         do { 
-            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+            try { 
+                Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+            }
+            catch { 
+                Remove-Variable APIerror -ErrorAction Ignore
+                if ($Error) { $Error.Remove($Error[0]) } 
+            }
             $APIallowedFailureCount --
             if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3157,7 +3166,13 @@ function Update-AllDAGdata {
         # Get block data for from whattomine.com
         $APIallowedFailureCount = 3
         do { 
-            try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+            try {
+                Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+            }
+            catch { 
+                Remove-Variable APIerror -ErrorAction Ignore
+                if ($Error) { $Error.Remove($Error[0]) }
+            }
             $APIallowedFailureCount --
             if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
         } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3209,7 +3224,13 @@ function Update-AllDAGdata {
                 # Get block data from StakeCube block explorer
                 $APIallowedFailureCount =3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+                    try {
+                        Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                    }
+                    catch { 
+                        Remove-Variable APIerror -ErrorAction Ignore
+                        if ($Error) { $Error.Remove($Error[0]) }
+                    }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3250,7 +3271,13 @@ function Update-AllDAGdata {
                 # Get block data from PHI block explorer
                 $APIallowedFailureCount = 3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+                    try {
+                        Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                    }
+                    catch { 
+                        Remove-Variable APIerror -ErrorAction Ignore
+                        if ($Error) { $Error.Remove($Error[0]) }
+                    }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3290,7 +3317,13 @@ function Update-AllDAGdata {
                 # Get block data from MeowCoin block explorer
                 $APIallowedFailureCount = 3
                 do { 
-                    try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+                    try {
+                        Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                    }
+                    catch { 
+                        Remove-Variable APIerror -ErrorAction Ignore
+                        if ($Error) { $Error.Remove($Error[0]) }
+                    }
                     $APIallowedFailureCount --
                     if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
                 } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
@@ -3330,7 +3363,13 @@ function Update-AllDAGdata {
             # Get block data from Parallax block explorer
             $APIallowedFailureCount = 3
             do { 
-                try { Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null } catch { if ($Error) { $Error.Remove($Error[0]) } }
+                try {
+                    Remove-Variable APIerror -ErrorAction Ignore; $APIdata = Invoke-WebRequest -Uri $URL -TimeoutSec 3 -Headers $Headers -UserAgent $UserAgent -AllowInsecureRedirect -SkipCertificateCheck -ErrorAction Ignore -ErrorVariable APIerror 2>$null 3>$null 4>$null 5>$null 6>$null
+                }
+                catch { 
+                    Remove-Variable APIerror -ErrorAction Ignore
+                    if ($Error) { $Error.Remove($Error[0]) }
+                }
                 $APIallowedFailureCount --
                 if (-not $APIdata -and $APIallowedFailureCount -gt 0) { Start-Sleep -Seconds 3 }
             } until ($APIdata.StatusCode -in @(200, 404) -or $APIallowedFailureCount -eq 0)
