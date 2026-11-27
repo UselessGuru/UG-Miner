@@ -1,3 +1,16 @@
+Changelog UG-Miner 6.9.8 2026/11/27
+===================================
+
+Fixes:
+- Core: No more 'No miners found' message after stopping and restarting mining processes
+
+Miner changes:
+- BzMiner-v100.84 (update)
+- OneZeroMiner-v1.8.7 (update)
+- SRBMinerMulti-v3.9.1 (update)
+- Wildrig-v1.0.6 beta (update)
+
+
 Changelog UG-Miner 6.9.7 2026/11/26
 ===================================
 

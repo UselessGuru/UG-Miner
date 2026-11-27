@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.7
-Version date:   2026/11/26
+Version:        6.9.8
+Version date:   2026/11/27
 #>
 
 # Efficiency improvement for 30xx, 40xx, and 50xx series
@@ -37,13 +37,21 @@ Version date:   2026/11/26
 
 # These are another way of adjusting the V/F curve. You typically can get the same result with just locking core clock and adding a core offset.
 
-# Added locking memory clock to 405 on Windows
-# Added support for 405 memory clock on older drivers
-# Added native overclocking for Pascal cards
+# Efficiency improvement for 20xx, 30xx, 40xx, and 50xx cards
+# Added support for non-tensor-core Turing and Pascal GPUs (1660 Ti, 1080 Ti, etc. lock memory to 810/405)
+# Added api control commands pause/resume/exit for controlling the miner and switching to other tasks. 
+# A new option --api-control has been added that must be set to enable the command endpoints.
+# example: curl -X POST http://127.0.0.1:3001/pause
+# Added poolside hashrate visible on the API. 
+# This is a different method of calculating hashrate based on the accepted shares and their difficulty
+# sample command to see it: curl -s http://127.0.0.1:3001/ | jq '.algos[].pool_hashrate' (change 3001 to the api port. The hiveos custom package uses port 63002)
+# Fixed power-save issue on drivers 620+
+# Improved power save for low end 50xx series cards (5070 and lower)
+# Minor bug fixes
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.Type -eq "NVIDIA" -and $_.OpenCL.ComputeCapability -ge "6.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"528.33.00") })) { return }
 
-$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.5/onezerominer-win64-1.8.5.zip"
+$URL = "https://github.com/OneZeroMiner/onezerominer/releases/download/v1.8.7/onezerominer-win64-1.8.7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\onezerominer.exe"
 $DeviceEnumerator = "Type_Slot"

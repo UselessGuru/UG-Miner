@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.7
-Version date:   2026/11/26
+Version:        6.9.8
+Version date:   2026/11/27
 #>
 
 # Improved the Quantus performance. 1xxx,2xxx,3xxx,4xxx,5xxx series +1-7%

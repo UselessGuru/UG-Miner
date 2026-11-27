@@ -32,12 +32,12 @@
     },
     "EvrProgPow": {
       "Algorithm": "EvrProgPow",
-      "BlockHeight": 2126546,
+      "BlockHeight": 2127608,
       "CoinName": "Everus",
       "Currency": "EVR",
       "DAGsize": 4722786176,
       "Epoch": 179,
-      "Updated": "2026-11-26T07:08:02.2718461Z",
+      "Updated": "2026-11-27T01:17:18.8871409Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "FiroPow": {
@@ -82,12 +82,12 @@
     },
     "MeowPow": {
       "Algorithm": "MeowPow",
-      "BlockHeight": 2162097,
+      "BlockHeight": 2163054,
       "CoinName": "Meowcoin",
       "Currency": "MEWC",
       "DAGsize": 10804525184,
       "Epoch": 290,
-      "Updated": "2026-11-26T07:09:03.6011997Z",
+      "Updated": "2026-11-27T01:12:58.4858825Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "Octopus": {
@@ -102,12 +102,12 @@
     },
     "PhiHash": {
       "Algorithm": "PhiHash",
-      "BlockHeight": 2917866,
+      "BlockHeight": 2922176,
       "CoinName": "PHI Token",
       "Currency": "PHI",
       "DAGsize": 1090514816,
       "Epoch": 2,
-      "Updated": "2026-11-26T07:09:03.6509195Z",
+      "Updated": "2026-11-27T01:17:19.3101018Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "ProgPow": {
@@ -122,12 +122,12 @@
     },
     "ProgPowTelestai": {
       "Algorithm": "ProgPowTelestai",
-      "BlockHeight": 1207816,
+      "BlockHeight": 1208876,
       "CoinName": "Telestai",
       "Currency": "TLS",
       "DAGsize": 1929379456,
       "Epoch": 102,
-      "Updated": "2026-11-26T07:02:54.7933951Z",
+      "Updated": "2026-11-27T01:12:58.5758566Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "ProgPowZ": {
@@ -142,12 +142,12 @@
     },
     "SCCpow": {
       "Algorithm": "SCCpow",
-      "BlockHeight": 1563835,
+      "BlockHeight": 1564390,
       "CoinName": "StakeCube coin",
       "Currency": "SCC",
       "DAGsize": 5133827456,
       "Epoch": 484,
-      "Updated": "2026-11-26T07:09:03.6747267Z",
+      "Updated": "2026-11-27T01:17:19.3530078Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "XHash": {
@@ -230,12 +230,12 @@
     },
     "EVR": {
       "Algorithm": "EvrProgPow",
-      "BlockHeight": 2126546,
+      "BlockHeight": 2127608,
       "CoinName": "Everus",
       "Currency": "EVR",
       "DAGsize": 4722786176,
       "Epoch": 179,
-      "Updated": "2026-11-26T07:08:02.2718461Z",
+      "Updated": "2026-11-27T01:17:18.8871409Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "FIRO": {
@@ -250,23 +250,23 @@
     },
     "FREN": {
       "Algorithm": "KawPow",
-      "BlockHeight": 3709574,
+      "BlockHeight": 3711653,
       "CoinName": "Frencoin",
       "Currency": "FREN",
       "DAGsize": 5234490496,
       "Epoch": 496,
-      "Updated": "2026-11-26T07:09:03.4682394Z",
+      "Updated": "2026-11-27T01:12:58.3986069Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "GAEL": {
       "Algorithm": "KawPow",
-      "BlockHeight": 109715,
+      "BlockHeight": 110197,
       "CoinName": "Gaelium",
       "Currency": "GAEL",
       "DAGsize": 1207958912,
       "Epoch": 16,
-      "Updated": "2026-11-26T06:32:21.7283377Z",
-      "URL": "https://pool.rplant.xyz/api/currencies"
+      "Updated": "2026-11-27T01:12:58.4098442Z",
+      "URL": "https://www.zpool.ca/api/currencies"
     },
     "IRON": {
       "Algorithm": "FishHash",
@@ -300,12 +300,12 @@
     },
     "KRGN": {
       "Algorithm": "KawPow",
-      "BlockHeight": 193973,
+      "BlockHeight": 194394,
       "CoinName": "Kerrigan",
       "Currency": "KRGN",
       "DAGsize": 1300234112,
       "Epoch": 27,
-      "Updated": "2026-11-26T07:04:56.6335625Z",
+      "Updated": "2026-11-27T01:12:58.4452159Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "LAX": {
@@ -330,22 +330,22 @@
     },
     "MEWC": {
       "Algorithm": "MeowPow",
-      "BlockHeight": 2162097,
+      "BlockHeight": 2163054,
       "CoinName": "Meowcoin",
       "Currency": "MEWC",
       "DAGsize": 10804525184,
       "Epoch": 290,
-      "Updated": "2026-11-26T07:09:03.6011997Z",
+      "Updated": "2026-11-27T01:12:58.4858825Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "NEOX": {
       "Algorithm": "KawPow",
-      "BlockHeight": 2363016,
+      "BlockHeight": 2364110,
       "CoinName": "Neoxa",
       "Currency": "NEOX",
       "DAGsize": 3732925568,
       "Epoch": 317,
-      "Updated": "2026-11-26T07:09:03.6288756Z",
+      "Updated": "2026-11-27T01:12:58.5051922Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "OCTA": {
@@ -360,12 +360,12 @@
     },
     "PHI": {
       "Algorithm": "PhiHash",
-      "BlockHeight": 2917866,
+      "BlockHeight": 2922176,
       "CoinName": "PHI Token",
       "Currency": "PHI",
       "DAGsize": 1090514816,
       "Epoch": 2,
-      "Updated": "2026-11-26T07:09:03.6509195Z",
+      "Updated": "2026-11-27T01:17:19.3101018Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "QKC": {
@@ -390,12 +390,12 @@
     },
     "RVN": {
       "Algorithm": "KawPow",
-      "BlockHeight": 4642022,
+      "BlockHeight": 4643110,
       "CoinName": "Ravencoin",
       "Currency": "RVN",
-      "DAGsize": 6274676864,
-      "Epoch": 620,
-      "Updated": "2026-11-26T07:09:03.6705387Z",
+      "DAGsize": 6283065728,
+      "Epoch": 621,
+      "Updated": "2026-11-27T01:17:19.3447849Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "SATOX": {
@@ -410,32 +410,32 @@
     },
     "SCC": {
       "Algorithm": "SCCpow",
-      "BlockHeight": 1563835,
+      "BlockHeight": 1564390,
       "CoinName": "StakeCube coin",
       "Currency": "SCC",
       "DAGsize": 5133827456,
       "Epoch": 484,
-      "Updated": "2026-11-26T07:09:03.6747267Z",
+      "Updated": "2026-11-27T01:17:19.3530078Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "TLS": {
       "Algorithm": "ProgPowTelestai",
-      "BlockHeight": 1207816,
+      "BlockHeight": 1208876,
       "CoinName": "Telestai",
       "Currency": "TLS",
       "DAGsize": 1929379456,
       "Epoch": 102,
-      "Updated": "2026-11-26T07:02:54.7933951Z",
+      "Updated": "2026-11-27T01:12:58.5758566Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "XNA": {
       "Algorithm": "KawPow",
-      "BlockHeight": 1884327,
+      "BlockHeight": 1885384,
       "CoinName": "Neurai",
       "Currency": "XNA",
       "DAGsize": 3196056704,
       "Epoch": 253,
-      "Updated": "2026-11-26T07:08:02.6216768Z",
+      "Updated": "2026-11-27T01:16:07.1268686Z",
       "URL": "https://www.zpool.ca/api/currencies"
     },
     "ZANO": {
@@ -463,7 +463,7 @@
     "https://explorer.parallaxchain.org/api/v2/stats": "2026-11-26T07:09:40.8602969Z",
     "https://pool.rplant.xyz/api/currencies": "2026-11-26T06:32:21.7840115Z",
     "https://whattomine.com/coins.json": "2026-11-26T06:32:21.5775653Z",
-    "https://www.zpool.ca/api/currencies": "2026-11-26T07:09:03.6747546Z",
+    "https://www.zpool.ca/api/currencies": "2026-11-27T01:17:19.3530614Z",
     "https://www.coinexplorer.net/api/v1/SCC/block/latest": "2026-10-10T19:39:14.4888446Z",
     "https://explorer.phicoin.net/api/getblockcount": "2026-11-26T06:35:57.9427049Z",
     "https://api.mewccrypto.com/mining-info": "2026-11-26T06:42:18.6520979Z"

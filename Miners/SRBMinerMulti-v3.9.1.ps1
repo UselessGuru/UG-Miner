@@ -17,20 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.7
-Version date:   2026/11/26
+Version:        6.9.8
+Version date:   2026/11/27
 #>
 
-# + Minor efficiency improvements on algorithm 'pearlhash' for NVIDIA 3000, 4000 and 5000 GPUs
-# + NVIDIA 2000 series and CMP40/50HX can now use mem clocks 405/810MHz on algorithm 'pearlhash' with minimal hashrate loss
-# + Added OC capability for AMD RDNA GPUs (Linux only)
-# + Added OC parameter '--gpu-vddc-offset' (NVIDIA & AMD)
-# + Fixed algorithm 'pearlhash' failing to start on Windows and drivers newer than 25.x for AMD RDNA4
-# + Bug fixes
+# Added algorithm 'neb' (Neural Engine Byte) for NVIDIA GPUS, fee 1.5%*
+# Added parameter '--hashrate-report-interval'
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "CPU" -or $_.Type -eq "INTEL" -or ($_.Type -eq "AMD" -and $_.Architecture -notmatch "GCN[1-3]" -and $_.OpenCL.ClVersion -match "OpenCL C [2\.\d+]") -or ($_.OpenCL.ComputeCapability -gt "5.0" -and $_.OpenCL.DriverVersion -ge "510.00") })) { return }
 
-$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.8.9/SRBMiner-Multi-3-8-9-win64.zip"
+$URL = "https://github.com/doktor83/SRBMiner-Multi/releases/download/3.9.1/SRBMiner-Multi-3-9-1-win64.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\SRBMiner-MULTI.exe"
 $DeviceEnumerator = "Type_Vendor_Slot"
@@ -157,6 +153,7 @@ $Algorithms = @(
     @{ Algorithms = @("HeavyHash", "");                 Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 2;    WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm heavyhash") } # FPGA
     @{ Algorithms = @("KawPow", "");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 1.24; WarmupTimes = @(90, 30);  ExcludeGPUarchitectures = " "; ExcludePools = @(@("NiceHash"), @()); Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm kawpow") }
     @{ Algorithms = @("MeowPow", "");                   Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 1.38; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm meowpow") }
+    @{ Algorithms = @("Nebius", "");                    Type = "INTEL"; Fee = @(0.015);          MinMemGiBfree = 1.38; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm neb") }
     @{ Algorithms = @("NeuroMorph", "");                Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 1.38; WarmupTimes = @(60, 15);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm neuromorph") }
     @{ Algorithms = @("OggPoW", "");                    Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 1.24; WarmupTimes = @(45, 0);   ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm oggpow") }
     @{ Algorithms = @("PhiHash", "");                   Type = "INTEL"; Fee = @(0.0085);         MinMemGiBfree = 1.24; WarmupTimes = @(45, 30);  ExcludeGPUarchitectures = " "; ExcludePools = @(@(), @());           Arguments = @(" --disable-cpu --disable-gpu-amd --disable-gpu-nvidia --algorithm phihash") }

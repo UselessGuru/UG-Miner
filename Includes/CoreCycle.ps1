@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\CoreCycle_dev.ps1
-Version:        6.9.7
-Version date:   2026/11/26
+Version:        6.9.8
+Version date:   2026/11/27
 #>
 
 using module .\Include.psm1
@@ -800,8 +800,7 @@ try {
                     $WorkerStrings = [System.Collections.Generic.List[String]]::new()
                     $Workers = $Miner.Workers
 
-                    try { 
-                        $Miner = $Miner -as $Miner.API
+                    if ($Miner = $Miner -as $Miner.API) { 
                         $WorkerStrings = [System.Collections.Generic.List[String]]::new()
                         $Workers = $Miner.Workers
                         for ($i = 0; $i -lt $Workers.Count; $i++) { 
@@ -813,8 +812,9 @@ try {
 
                         $Miner
                     }
-                    catch { 
+                    else { 
                         # [Activator] workaround for PWSH 'forgetting' custom class definitions
+                        $Miner = $_
                         $M = [Activator]::CreateInstance([Type]$Miner.API)
                         $Miner.Keys.Where{ $_ -ne "Workers" }.ForEach{ $M.$_ = $Miner.$_ }
 

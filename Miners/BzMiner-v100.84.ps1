@@ -17,23 +17,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.7
-Version date:   2026/11/26
+Version:        6.9.8
+Version date:   2026/11/27
 #>
 
-# Pearl is 4-10% more efficient (TH/W) on RTX 50, RTX 40 and RTX 30 cards
-# Pearl on Windows is up to 0.7% faster on RTX 50 cards
-# Pearl supports zstd stratum compression on pools that ask for it, such as Kryptex
-# --bench and --benchmark now do the same work, at the right difficulty for every algorithm
-# --cpu_threads takes a negative number to leave that many threads free (-4 mines on 28 of 32)
-# The web dashboard has Processes and System pages, with opt-in controls to end a process or reboot the rig
-# The web dashboard's Utilities install NVIDIA drivers, unlock CMP 170HX cards and lift the GeForce tensor cap on Linux
-# The language model server loads Qwen's own FP8 checkpoints, such as Qwen3-32B-FP8
-# Fixed: Llama-3.3-70B could give a wrong first answer after loading
+# Added BitcoBoost (BCBO, X16RV2) mining on NVIDIA, AMD, Intel and Apple GPUs and on CPU
+# BitcoBoost can be solo mined against your own node with an http:// pool URL
+# Pearl is about 1% more efficient (TH/W) on RTX 30 cards
+# CryptoNight is faster and more stable on RDNA 1 and 2 cards
+# NVIDIA core voltage is shown on Linux and in the web dashboard
+# --oc-lock-core-voltage works on Linux and holds the voltage while mining
+# --oc-core-voltage-offset works on NVIDIA cards and never undervolts further than asked
+# A dense language model on two cards runs tensor parallel, several times faster with many users
+# added support for glm and deepseek models for llm inference
+# added support for exl3 models
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ "AMD", "CPU", "INTEL" -contains $_.Type -or ($_.OpenCL.ComputeCapability -ge "5.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"460.27.03") })) { return }
 
-$URL = "https://github.com/bzminer/bzminer/releases/download/v100.83/bzminer_v100.83_windows.zip"
+$URL = "https://github.com/bzminer/bzminer/releases/download/v100.84/bzminer_v100.84_windows.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\bzminer.exe"
 $DeviceEnumerator = "Bus"
