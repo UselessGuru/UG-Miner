@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\Kryptex.ps1
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -99,8 +99,10 @@ while ($Config.PoolsConfig.$Name) {
                                 # Write-Message -Level Error "Brain '$Name': Query to '$URL' failed ($($APIerror.Message))"
                             }
                             elseif ($APIdata.Content -and (Test-Json $APIdata.Content -ErrorAction Ignore)) { 
-                                if ($PoolInfo = $APIdata.Content | ConvertFrom-Json) { 
 
+                                $PoolInfo = $APIdata.Content | ConvertFrom-Json
+
+                                if ($PoolInfo.algo) { 
                                     $AlgorithmNorm = Get-Algorithm $PoolInfo.algo
                                     $Currency = [String]$PoolInfo.Currency # Without cast value might be $null
                                     if ($Currency -notin $Session.KryptexCurrencies) { 
@@ -133,14 +135,11 @@ while ($Config.PoolsConfig.$Name) {
                     }
                 }
             }
+            $Session.BrainData.$Name = $BrainData
+            if ($BrainData) { $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force }
 
-            if ($BrainData) { 
-                $Session.BrainData.$Name = $BrainData
-                $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
-
-                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                    ($BrainData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
-                }
+            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                ($BrainData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
         }
         catch { 

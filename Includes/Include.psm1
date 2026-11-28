@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\include.ps1
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
 $Global:DebugPreference       = "SilentlyContinue"
@@ -1628,7 +1628,7 @@ function Update-ConfigFile {
     }
     $Config.Remove("NiceHashWalletIsInternal")
 
-    # ZPool24hr & ZPoolPlus removed in v6.9.8
+    # ZPool24hr & ZPoolPlus removed in v6.9.9
     if ($Config.PoolName -match "ZPool24hr|ZPoolPlus") { 
         Write-Message -Level Warn "Configuration changed during update (Pool 'ZPool24hr' & 'ZPoolPlus' removed)."
         $Session.ConfigurationHasChangedDuringUpdate += "- Pool 'ZPool24hr' & 'ZPoolPlus' removed"
@@ -3152,11 +3152,11 @@ function Update-AllDAGdata {
                 Write-Message -Level Info "Loaded DAG data from '$URL'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL'."
             }
         }
         else { 
-            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+            Write-Message -Level Warn "Failed to load DAG data from '$URL'."
         }
     }
 
@@ -3206,11 +3206,11 @@ function Update-AllDAGdata {
                 Write-Message -Level Info "Loaded DAG data from '$URL'..."
             }
             else { 
-                Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                Write-Message -Level Warn "Failed to load DAG data from '$URL'."
             }
         }
         else { 
-            Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+            Write-Message -Level Warn "Failed to load DAG data from '$URL'."
         }
     }
 
@@ -3255,7 +3255,7 @@ function Update-AllDAGdata {
                     }
                 }
                 else { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL'."
                 }
             }
         }
@@ -3300,7 +3300,7 @@ function Update-AllDAGdata {
                     }
                 }
                 else { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL'."
                 }
             }
         }
@@ -3348,7 +3348,7 @@ function Update-AllDAGdata {
                     }
                 }
                 else { 
-                    Write-Message -Level Warn "Failed to load DAG data from '$URL' - Error: $($_.Exception.Message -replace "^.+: " -replace "\.$")."
+                    Write-Message -Level Warn "Failed to load DAG data from '$URL'."
                 }
             }
         }

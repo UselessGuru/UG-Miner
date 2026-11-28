@@ -1,3 +1,18 @@
+Changelog UG-Miner 6.9.9 2026/11/28
+===================================
+
+Enhancements:
+- Brains: Make code more robust when pool API is in error
+
+Fixes:
+- Balances Tracker: Incorrect payout date projection (regression from 6.9.7)
+- Web GUI / Unavailable miners: Button 'Remove watchdog' not working
+
+Miner changes:
+- TeamBlackMiner-v2.49 (update)
+- Wildrig-v1.0.7 beta (update)
+
+
 Changelog UG-Miner 6.9.8 2026/11/27
 ===================================
 

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Product:        UG-Miner
 File:           \Includes\BalancesTracker.ps1
 Version:        6.9.3
-Version date:   2026/11/27
+Version date:   2026/11/28
 #>
 
 using module .\Include.psm1
@@ -298,7 +298,7 @@ do {
                             AvgDailyGrowth          = $AvgDailyGrowth
                             AvgWeeklyGrowth         = $AvgWeeklyGrowth
                             ProjectedEndDayGrowth   = if (($Now - $BalanceDataObjects[0].DateTime).TotalHours -ge 1) { $AvgHourlyGrowth * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours } else { $Growth1 * ((Get-Date -Hour 0 -Minute 00 -Second 00).AddDays(1).AddSeconds(-1) - $Now).Hours }
-                            ProjectedPayDate        = if ($PayoutThreshold -and $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ([Double]$BalanceObject.Balance -lt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ($AddDays -le 1000) { [DateTime]$Now.AddDays($AddDays) } else { "> 1000 days" } } else { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } } else { "Unknown" }
+                            ProjectedPayDate        = if ($AddDays -gt 1000) { "> 1000 days" } elseif ($AddDays -and [Double]$BalanceObject.Balance -gt $PayoutThreshold * $Session.Rates.$PayoutThresholdCurrency.($BalanceObject.Currency)) { if ($BalanceObject.NextPayout) { $BalanceObject.NextPayout } else { "Next pool payout" } } elseif ($AddDays) { [DateTime]$Now.AddDays($AddDays) } else { "Unknown" }
                             TrustLevel              = ((($Now - $BalanceDataObjects[0].DateTime).TotalHours / 168), 1 | Measure-Object -Minimum).Minimum
                             TotalHours              = ($Now - $BalanceDataObjects[0].DateTime).TotalHours
                             PayoutThreshold         = $PayoutThreshold

@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Brains\MiningDutch.ps1
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
 using module ..\Includes\Include.psm1
@@ -205,13 +205,11 @@ while ($Config.PoolsConfig.$Name) {
             }
             Remove-Variable AlgoGroup, Algorithm, AlgorithmNorm, Baseprice, Currency, CurrentPoolObjects, GroupAvgSampleSize, GroupMedSampleSize, GroupAvgSampleSizeHalf, GroupMedSampleSizeHalf, GroupMedSampleSizeNoPercent, LastPrice, Penalty, PenaltySampleSizeHalf, PenaltySampleSizeNoPercent, PlusPrice, PoolObject, Stat, StatName -ErrorAction Ignore
 
-            if ($BrainData) { 
-                $Session.BrainData.$Name = $BrainData
-                $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force
+            $Session.BrainData.$Name = $BrainData
+            if ($BrainData) { $Session.Brains.$Name | Add-Member "Updated" $Timestamp -Force }
 
-                if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
-                    ($BrainData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
-                }
+            if ($Config.PoolsConfig.$Name.BrainConfig.UseTransferFile -or $Config.PoolsConfig.$Name.BrainConfig.Debug) { 
+                ($BrainData | ConvertTo-Json).replace("NaN", 0) | Out-File -LiteralPath $BrainDataFile -Force -ErrorAction Ignore
             }
 
             # Limit to only sample size + 10 minutes history

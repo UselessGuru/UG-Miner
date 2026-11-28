@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Includes\MinerAPIs\GMiner.ps1
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
 [NoRunspaceAffinity()]

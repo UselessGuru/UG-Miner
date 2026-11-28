@@ -17,21 +17,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
-# Improved the Quantus performance. 1xxx,2xxx,3xxx,4xxx,5xxx series +1-7%
-# Improved the Nvidia pearl hash rates, +2-4% on older cards and +1% faster on the 5xxx series.
-# Added --core-offset instruction on Nvidia so set + clock on core.
-# Improved Quantus + Verthash dual mining speed on RTX 40 and RTX 50 cards.
-# A GPU that stops responding no longer stops the miner. It is skipped at start or dropped while mining.
-# Pool hash rate is shown per card in the miner output window.
-# Stability fixes.
+# Faster Quantus on AMD. All models. up to 100% faster than v2.48.
+# Faster Pearl on AMD +1-2%.
+# Faster Pearl on Nvidia +1-3% with better efficiency.
+# KawPow variants on NVIDIA slightly faster. Most speedup on the 1xxx and 2xxx series.
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ $_.Type -eq "AMD" -or ($_.OpenCL.ComputeCapability -ge "7.5" -and $_.CUDAversion -ge [System.Version]"12.9") })) { return }
 
-$URL = "https://github.com/UselessGuru/UG-Miner-Binaries/releases/download/TeamBlackMiner/TeamBlackMiner_2_48_cuda_12.9.7z"
+$URL = "https://github.com/sp-hash/TeamBlackMiner/releases/download/v2.49/TeamBlackMiner_2_49_cuda_12.9.7z"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\TBMiner.exe"
 
@@ -64,7 +61,7 @@ $Algorithms = @(
     @{ Algorithms = @("KawPow", "");             SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo kawpow" }
     @{ Algorithms = @("MeowPow", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo meowpow" }
     @{ Algorithms = @("Octopus", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo octopus" }
-#   @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = "^GCN.+|^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo pearl" } # Crashes and kills RX6600, no hash rate with RX5700
+    @{ Algorithms = @("PearlHash", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(90, 0);  ExcludeGPUarchitectures = "^GCN.+|^RDNA2$"; ExcludePools = @(@(), @()); Arguments = " --algo pearl" }
     @{ Algorithms = @("ProgPowEpic", "");        SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo epicpow" }
     @{ Algorithms = @("ProgPowZ ", "");          SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 1.24; Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo progpowz" }
     @{ Algorithms = @("Quantus", "");            SecondaryAlgorithmPrefix = "";      Type = "AMD"; Fee = @(0.005);        MinMemGiBfree = 2;    Tuning = ""; WarmupTimes = @(30, 15); ExcludeGPUarchitectures = " ";              ExcludePools = @(@(), @()); Arguments = " --algo quantus" }

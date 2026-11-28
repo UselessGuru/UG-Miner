@@ -19,8 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <#
 Product:        UG-Miner
 File:           \Pools\Kryptex.ps1
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
 param(
@@ -42,11 +42,11 @@ try {
     $BrainData = if ($Session.Brains.$Name) { $Session.BrainData.$Name } else { [System.IO.File]::ReadAllLines($BrainDataFile) | ConvertFrom-Json -ErrorAction Ignore }
 }
 catch { 
-    Write-Message -Level Warn "Pool '$Name': Cannot parse brain data."
+    Write-Message -Level Debug "Pool '$Name': Cannot parse brain data."
     return
 }
 if (-not $BrainData.PSObject.Properties.Name) { 
-    Write-Message -Level Warn "Pool '$Name': No brain data."
+    Write-Message -Level Debug "Pool '$Name': No brain data."
     return
 }
 

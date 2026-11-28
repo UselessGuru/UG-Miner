@@ -289,7 +289,7 @@
               if (selectedRows.length >= 1) {
                 $url = "/functions/watchdogtimers/remove";
                 $payload = {
-                  "Miners": JSON.stringify($data.map($element => ({Info: $element.Info})))
+                  "Miners": JSON.stringify(selectedRows.map($element => ({Info: $element.Info})))
                 };
                 $(".modal-body").load($url, $payload, function() {
                   $(".modal-title").text($("#btn-remove-watchdog").text());

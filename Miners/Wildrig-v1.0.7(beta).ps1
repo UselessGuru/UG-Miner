@@ -17,17 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 <#
 Product:        UG-Miner
-Version:        6.9.8
-Version date:   2026/11/27
+Version:        6.9.9
+Version date:   2026/11/28
 #>
 
-# decreased the size of binary
-# improved nebhash for NVIDIA gpu's
-# huge boost of nebhash for AMD gpu's
+# improved nebhash up to 20% on some blocks for NVIDIA and AMD gpu's
 
 if (-not ($Devices = $Session.EnabledDevices.Where{ ($_.Type -eq "AMD" -and $_.OpenCL.ClVersion -match "OpenCL C [1.2|2\.\d+]" -and $_.Architecture -notmatch "^GCN?$") -or $_.Type -eq "INTEL" -or ($_.OpenCL.ComputeCapability -ge "7.0" -and $_.OpenCL.DriverVersion -ge [System.Version]"452.39.00" -and $_.Model -notmatch "^MX\d.+") })) { return }
 
-$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.6/wildrig-ng-windows-1.0.6.zip"
+$URL = "https://github.com/andru-kun/wildrig-ng/releases/download/1.0.7/wildrig-ng-windows-1.0.7.zip"
 $Name = [String](Get-Item $MyInvocation.MyCommand.Path).BaseName
 $Path = "Bin\$Name\wildrig-ng.exe"
 $DeviceEnumerator = "Type_Slot"
